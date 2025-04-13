@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useProducts } from '../context/ProductContext';
 import ImageUploader from './ImageUploader';
 
@@ -12,34 +12,91 @@ const SellItemForm: React.FC<SellItemFormProps> = ({ onSubmit }) => {
     title: '',
     description: '',
     price: '',
-    category: '',
+    category: 'General',
     images: [] as string[],
     address: '',
+    phone: '',
   });
-  const [phoneCode, setPhoneCode] = useState('+1');
+  const [phoneCode, setPhoneCode] = useState('+91');
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const countryCodes = [
-    { code: '+1', country: 'USA/Canada' },
+    // North America
+    { code: '+1', country: 'USA' },
+    { code: '+1', country: 'Canada' },
+    
+    // Europe
     { code: '+44', country: 'UK' },
-    { code: '+61', country: 'Australia' },
+    { code: '+49', country: 'Germany' },
+    { code: '+33', country: 'France' },
+    { code: '+39', country: 'Italy' },
+    { code: '+34', country: 'Spain' },
+    { code: '+31', country: 'Netherlands' },
+    { code: '+46', country: 'Sweden' },
+    { code: '+47', country: 'Norway' },
+    { code: '+45', country: 'Denmark' },
+    { code: '+358', country: 'Finland' },
+    { code: '+48', country: 'Poland' },
+    { code: '+43', country: 'Austria' },
+    { code: '+41', country: 'Switzerland' },
+    { code: '+32', country: 'Belgium' },
+    { code: '+353', country: 'Ireland' },
+    { code: '+351', country: 'Portugal' },
+    { code: '+30', country: 'Greece' },
+    
+    // Asia
     { code: '+91', country: 'India' },
     { code: '+86', country: 'China' },
     { code: '+81', country: 'Japan' },
-    { code: '+49', country: 'Germany' },
-    { code: '+33', country: 'France' },
-    { code: '+7', country: 'Russia' },
-    { code: '+39', country: 'Italy' },
-    { code: '+34', country: 'Spain' },
-    { code: '+55', country: 'Brazil' },
-    { code: '+52', country: 'Mexico' },
     { code: '+82', country: 'South Korea' },
     { code: '+65', country: 'Singapore' },
+    { code: '+66', country: 'Thailand' },
+    { code: '+84', country: 'Vietnam' },
+    { code: '+62', country: 'Indonesia' },
+    { code: '+60', country: 'Malaysia' },
+    { code: '+63', country: 'Philippines' },
+    { code: '+880', country: 'Bangladesh' },
+    { code: '+94', country: 'Sri Lanka' },
+    { code: '+95', country: 'Myanmar' },
+    { code: '+977', country: 'Nepal' },
+    
+    // Middle East
     { code: '+971', country: 'UAE' },
     { code: '+966', country: 'Saudi Arabia' },
-    { code: '+27', country: 'South Africa' },
+    { code: '+974', country: 'Qatar' },
+    { code: '+973', country: 'Bahrain' },
+    { code: '+968', country: 'Oman' },
+    { code: '+965', country: 'Kuwait' },
+    { code: '+962', country: 'Jordan' },
+    { code: '+961', country: 'Lebanon' },
+    
+    // Oceania
+    { code: '+61', country: 'Australia' },
     { code: '+64', country: 'New Zealand' },
-    { code: '+31', country: 'Netherlands' }
+    
+    // Africa
+    { code: '+27', country: 'South Africa' },
+    { code: '+20', country: 'Egypt' },
+    { code: '+234', country: 'Nigeria' },
+    { code: '+254', country: 'Kenya' },
+    { code: '+251', country: 'Ethiopia' },
+    { code: '+212', country: 'Morocco' },
+    
+    // South America
+    { code: '+55', country: 'Brazil' },
+    { code: '+54', country: 'Argentina' },
+    { code: '+56', country: 'Chile' },
+    { code: '+57', country: 'Colombia' },
+    { code: '+51', country: 'Peru' },
+    { code: '+58', country: 'Venezuela' },
+    
+    // Others
+    { code: '+7', country: 'Russia' },
+    { code: '+380', country: 'Ukraine' },
+    { code: '+90', country: 'Turkey' },
+    { code: '+972', country: 'Israel' },
+    { code: '+52', country: 'Mexico' }
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -105,6 +162,7 @@ const SellItemForm: React.FC<SellItemFormProps> = ({ onSubmit }) => {
     submitFormData.append('category', formData.category);
     submitFormData.append('images', JSON.stringify(formData.images));
     submitFormData.append('address', formData.address);
+    submitFormData.append('subject', formData.title);
     
     const phoneInput = e.currentTarget.elements.namedItem('phone') as HTMLInputElement;
     if (phoneInput && phoneInput.value) {

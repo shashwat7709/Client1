@@ -61,15 +61,15 @@ const ModalWrapper: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <ProductProvider>
-        <NotificationProvider>
+      <NotificationProvider>
+        <ProductProvider>
           <CartProvider>
             <div className="min-h-screen bg-[#F5F1EA]">
               <ModalWrapper />
             </div>
           </CartProvider>
-        </NotificationProvider>
-      </ProductProvider>
+        </ProductProvider>
+      </NotificationProvider>
     </Router>
   );
 };
