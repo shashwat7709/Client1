@@ -100,10 +100,85 @@ export const useProducts = () => {
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { addNotification } = useNotifications();
-  const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = localStorage.getItem('products');
-    return savedProducts ? JSON.parse(savedProducts) : initialProducts;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch products from MongoDB on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('Failed to fetch products');
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        addNotification('Failed to load products', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [addNotification]);
+
+  const addProduct = async (product: Omit<Product, 'id'>) => {
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (!response.ok) throw new Error('Failed to add product');
+      
+      const newProduct = await response.json();
+      setProducts(prev => [...prev, newProduct]);
+      addNotification('Product added successfully!', 'success');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      addNotification('Failed to add product', 'error');
+    }
+  };
+
+  const updateProduct = async (product: Product) => {
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (!response.ok) throw new Error('Failed to update product');
+      
+      const updatedProduct = await response.json();
+      setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
+      addNotification('Product updated successfully!', 'success');
+    } catch (error) {
+      console.error('Error updating product:', error);
+      addNotification('Failed to update product', 'error');
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete product');
+      
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      addNotification('Product deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      addNotification('Failed to delete product', 'error');
+    }
+  };
 
   // Add a ref to track if we're in the middle of an update
   const isUpdating = useRef(false);
@@ -353,27 +428,6 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('offersAndDiscounts', JSON.stringify(offersAndDiscounts));
   }, [offersAndDiscounts]);
-
-  const addProduct = (product: Omit<Product, 'id'>) => {
-    const newProduct = {
-      ...product,
-      id: String(Date.now())
-    };
-    console.log('Adding new product:', newProduct);
-    setProducts(prev => {
-      const updatedProducts = [...prev, newProduct];
-      console.log('Updated products list:', updatedProducts);
-      return updatedProducts;
-    });
-  };
-
-  const updateProduct = (product: Product) => {
-    setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-  };
-
-  const deleteProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-  };
 
   // Update addSubmission to handle image compression
   const addSubmission = useCallback(async (submission: Omit<AntiqueSubmission, 'id' | 'status' | 'submittedAt'>) => {
