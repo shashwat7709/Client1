@@ -1,0 +1,425 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Petit+Formal+Script&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 34 33% 94%;  /* Warm beige background */
+    --foreground: 32 24% 28%;  /* Warm brown text */
+    --card: 34 33% 94%;
+    --card-foreground: 32 24% 28%;
+    --popover: 34 33% 94%;
+    --popover-foreground: 32 24% 28%;
+    --primary: 32 24% 28%;     /* Warm brown */
+    --primary-foreground: 34 33% 94%;
+    --secondary: 30 20% 88%;   /* Lighter beige */
+    --secondary-foreground: 32 24% 28%;
+    --muted: 30 20% 88%;
+    --muted-foreground: 32 18% 40%;
+    --accent: 28 40% 84%;      /* Warm accent */
+    --accent-foreground: 32 24% 28%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 32 24% 28%;
+    --input: 32 24% 28%;
+    --ring: 32 24% 28%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  
+  .ornate-border {
+    @apply relative overflow-hidden;
+  }
+  
+  .ornate-border::before,
+  .ornate-border::after {
+    @apply content-[''] absolute w-20 h-20 bg-primary opacity-30;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M20,0L0,20L0,80L80,0L20,0Z M60,80L80,60L80,0L0,80L60,80Z' fill='%23D4AF37'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+  }
+  
+  .ornate-border::before {
+    @apply top-0 left-0;
+  }
+  
+  .ornate-border::after {
+    @apply bottom-0 right-0 rotate-180;
+  }
+  
+  .gold-gradient {
+    @apply bg-gradient-to-r from-gold via-saffron to-gold bg-[length:200%_100%] animate-slow-shine;
+  }
+  
+  .antique-card {
+    @apply bg-background border border-primary/30 p-6 rounded-sm shadow-md transition-all duration-300 hover:shadow-xl;
+  }
+  
+  .decorative-divider {
+    @apply flex items-center justify-center my-8;
+  }
+  
+  .decorative-divider::before,
+  .decorative-divider::after {
+    @apply content-[''] bg-primary/50 h-[1px] w-full mx-4;
+  }
+  
+  .decorative-divider span {
+    @apply text-primary text-xl px-4;
+  }
+}
+
+@layer components {
+  .heritage-card {
+    @apply relative overflow-hidden bg-ivory border border-gold/20 rounded-lg shadow-carved;
+  }
+
+  .heritage-card::before {
+    @apply content-[''] absolute inset-0 bg-filigree-pattern opacity-5 pointer-events-none;
+  }
+
+  .gold-frame {
+    @apply relative p-1 bg-gold-shimmer bg-[length:200%_200%] animate-shimmer rounded-lg shadow-gold;
+  }
+
+  .carved-detail {
+    @apply opacity-0 transition-opacity duration-500 animate-reveal-carving;
+  }
+
+  .group:hover .carved-detail {
+    @apply opacity-100;
+  }
+
+  .wax-seal {
+    @apply relative w-16 h-16 bg-maroon rounded-full shadow-lg flex items-center justify-center text-ivory opacity-0 animate-wax-seal;
+  }
+
+  .aged-text {
+    @apply relative;
+  }
+
+  .aged-text::before {
+    @apply content-[''] absolute inset-0 bg-aged-paper opacity-10 mix-blend-multiply pointer-events-none;
+  }
+
+  .heritage-input {
+    @apply px-4 py-2 bg-ivory border-2 border-gold/20 rounded-md focus:border-gold focus:ring-1 focus:ring-gold/30 shadow-embossed;
+  }
+
+  .heritage-button {
+    @apply inline-flex items-center justify-center
+           px-6 py-2.5 rounded-md
+           font-display text-base tracking-wide
+           transition-all duration-300
+           bg-[#46392d] text-[#F5F1EA]
+           hover:bg-[#46392d]/90
+           border border-[#46392d]/10;
+  }
+
+  .heritage-button span {
+    @apply relative z-10;
+  }
+
+  .heritage-button::before {
+    content: none;
+  }
+
+  .heritage-button:hover span {
+    @apply text-[#F5F1EA];
+  }
+
+  .heritage-button:hover {
+    @apply transform -translate-y-0.5
+           shadow-lg;
+  }
+
+  .signature-text {
+    @apply font-signature text-2xl text-gold italic;
+  }
+
+  /* Updated Product Display Text Styles */
+  .product-title {
+    @apply font-display text-lg md:text-xl text-gold font-bold 
+           relative z-20 bg-ebony/85 px-4 py-2 rounded
+           shadow-lg backdrop-blur-sm border border-gold/20
+           block mb-3 max-w-[90%];
+  }
+
+  .product-description {
+    @apply font-body text-sm md:text-base text-ivory/90
+           bg-ebony/85 px-4 py-2 rounded
+           shadow-lg backdrop-blur-sm 
+           border border-gold/10
+           block max-w-[90%];
+  }
+
+  .product-overlay {
+    @apply absolute bottom-0 left-0 right-0
+           bg-gradient-to-t from-ebony/90 via-ebony/70 to-transparent
+           p-6 backdrop-blur-sm
+           flex flex-col items-start justify-end
+           min-h-[40%];
+  }
+
+  .product-card {
+    @apply relative overflow-hidden h-full;
+  }
+
+  .group:hover .product-overlay {
+    @apply from-ebony/95 via-ebony/85 to-transparent;
+  }
+
+  .product-label {
+    @apply absolute top-4 left-4 z-30
+           bg-gold text-ivory px-4 py-1.5 rounded
+           font-display text-sm tracking-wider uppercase
+           shadow-lg backdrop-blur-sm border border-gold/50;
+  }
+
+  .collection-title {
+    @apply relative inline-block mb-6;
+  }
+
+  .collection-title::after {
+    @apply content-[''] absolute -bottom-3 left-1/2
+           w-24 h-1 bg-gold/20
+           transform -translate-x-1/2;
+  }
+
+  .vintage-text-overlay {
+    @apply relative inline-block;
+  }
+
+  .vintage-text-overlay::before {
+    @apply content-[''] absolute inset-0
+           bg-ivory/90 -z-10
+           backdrop-blur-[2px]
+           border border-gold/20
+           rounded-sm shadow-md;
+  }
+
+  .product-grid {
+    @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4
+           gap-4 md:gap-6 max-w-6xl mx-auto;
+  }
+
+  .product-image-container {
+    @apply relative overflow-hidden rounded-lg
+           shadow-md hover:shadow-lg
+           transition-all duration-300
+           max-w-[280px] mx-auto;
+  }
+
+  .product-image {
+    @apply w-full h-[450px] object-cover
+           transition-all duration-500
+           hover:brightness-110;
+  }
+
+  .group:hover .product-image {
+    @apply scale-105;
+  }
+
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .text-outline {
+    -webkit-text-stroke: 1px rgba(199, 160, 8, 0.3);
+  }
+
+  .glass-panel {
+    @apply bg-ivory/80 backdrop-blur-md border border-gold/20 
+           shadow-md rounded-sm p-4;
+  }
+
+  .product-info {
+    @apply flex flex-col gap-2 p-4 bg-ivory/95 backdrop-blur-sm
+           border-t border-gold/20;
+  }
+
+  /* Enhanced text protection */
+  .text-protection-wrapper {
+    @apply relative;
+  }
+
+  .text-protection-wrapper::before {
+    @apply content-[''] absolute -inset-2
+           bg-ebony/80 backdrop-blur-md -z-10
+           rounded shadow-lg;
+  }
+
+  .text-shadow-lg {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Navigation Styles */
+  .nav-container {
+    @apply fixed top-0 left-0 right-0 z-50 
+           bg-[#F5F1EA]
+           border-b border-[#46392d]/10;
+  }
+
+  .nav-content {
+    @apply container mx-auto px-6 py-4
+           flex items-center justify-between;
+  }
+
+  .nav-links {
+    @apply flex items-center space-x-8;
+  }
+
+  .nav-link {
+    @apply font-display text-[#46392d] hover:text-[#46392d]/80
+           transition-colors duration-300
+           text-base tracking-wide;
+  }
+
+  .nav-link::after {
+    @apply content-[''] absolute left-0 right-0 bottom-0
+           h-[2px] bg-gold scale-x-0 origin-left
+           transition-transform duration-300;
+  }
+
+  .nav-link:hover::after {
+    @apply scale-x-100;
+  }
+
+  .nav-brand {
+    @apply font-display text-2xl text-[#46392d]
+           tracking-wide;
+  }
+
+  .certified-badge {
+    @apply absolute top-0 right-0 
+           bg-maroon text-ivory
+           px-4 py-1 rounded-lg
+           font-display text-sm tracking-wider
+           transform translate-x-1/2 -translate-y-1/2
+           shadow-lg border border-gold/50
+           z-20;
+  }
+
+  .gallery-item-overlay {
+    @apply absolute inset-0 p-3
+           flex flex-col justify-end
+           bg-gradient-to-t from-[#46392d]/80 to-transparent;
+  }
+
+  .gallery-title {
+    @apply text-sm md:text-base font-display 
+           text-[#F5F1EA] mb-0.5;
+  }
+
+  .gallery-description {
+    @apply text-xs font-body text-[#F5F1EA]/90
+           leading-tight;
+  }
+
+  .collection-text-overlay {
+    @apply absolute bottom-0 left-0 right-0
+           bg-gradient-to-t from-ebony/95 via-ebony/80 to-transparent
+           p-6 backdrop-blur-sm;
+  }
+
+  .collection-title {
+    @apply font-display text-2xl text-gold mb-2
+           text-shadow-lg drop-shadow-xl;
+  }
+
+  .collection-description {
+    @apply font-body text-ivory/90
+           text-shadow-lg drop-shadow-xl
+           max-w-prose;
+  }
+
+  /* Image text protection */
+  .image-text {
+    @apply relative z-10 
+           text-shadow-lg drop-shadow-xl
+           bg-ebony/70 backdrop-blur-sm
+           px-4 py-2 rounded-lg
+           border border-gold/20
+           inline-block;
+  }
+
+  /* Category buttons */
+  .category-button {
+    @apply px-5 py-2 rounded-md text-sm
+           transition-all duration-300
+           font-display tracking-wide;
+  }
+
+  .category-button-active {
+    @apply bg-[#46392d] text-[#F5F1EA]
+           shadow-sm;
+  }
+
+  .category-button-inactive {
+    @apply bg-[#F5F1EA] text-[#46392d]
+           border border-[#46392d]/20
+           hover:bg-[#46392d]/5;
+  }
+
+  /* Section titles */
+  .section-title {
+    @apply text-4xl md:text-5xl lg:text-6xl
+           font-display text-[#46392d]
+           mb-6 tracking-wide;
+  }
+
+  .section-subtitle {
+    @apply text-lg md:text-xl
+           font-body text-[#46392d]/70
+           max-w-2xl mx-auto
+           leading-relaxed;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#F5F1EA];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[#46392d]/30 rounded-full hover:bg-[#46392d]/50 transition-colors duration-300;
+}
+
+/* Parallax Base Styles */
+.parallax-wrapper {
+  @apply overflow-hidden relative;
+}
+
+.parallax-section {
+  @apply relative min-h-screen flex items-center justify-center;
+  transform-style: preserve-3d;
+}
+
+.parallax-bg {
+  @apply absolute inset-0 bg-cover bg-center;
+  transform: translateZ(-10px) scale(2);
+}
+
+.parallax-content {
+  @apply relative z-10 transform-gpu;
+}
