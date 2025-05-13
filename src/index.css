@@ -29,6 +29,10 @@
     --input: 32 24% 28%;
     --ring: 32 24% 28%;
     --radius: 0.5rem;
+    --font-primary: "Baskerville", "Libre Baskerville", "Georgia", serif;
+    --font-secondary: "Palatino", "Palatino Linotype", "Book Antiqua", serif;
+    --font-tertiary: "Garamond", "Times New Roman", serif;
+    --font-script: "Brush Script MT", "Segoe Script", cursive;
   }
 
   * {
@@ -37,10 +41,14 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
-  h1, h2, h3, h4 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+    font-family: var(--font-primary);
   }
   
   .ornate-border {
@@ -422,4 +430,37 @@
 
 .parallax-content {
   @apply relative z-10 transform-gpu;
+}
+
+/* Font imports with fallbacks */
+@import url('https://cdn.jsdelivr.net/npm/playfair-display@1.1.3/fonts/playfair-display.css');
+@import url('https://cdn.jsdelivr.net/npm/lora@1.1.0/fonts/lora.css');
+@import url('https://cdn.jsdelivr.net/npm/eb-garamond@1.1.0/fonts/eb-garamond.css');
+@import url('https://cdn.jsdelivr.net/npm/petit-formal-script@1.1.0/fonts/petit-formal-script.css');
+
+/* Fallback font stack */
+:root {
+  --font-playfair: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-lora: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-garamond: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-script: 'Petit Formal Script', 'Brush Script MT', cursive;
+}
+
+/* Apply fonts to elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+}
+
+body {
+  font-family: var(--font-secondary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif {
+  font-family: var(--font-primary);
+}
+
+.font-script {
+  font-family: var(--font-script);
 }
