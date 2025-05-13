@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../config/supabase';
 
 interface UserRegistrationModalProps {
   isOpen: boolean;
@@ -9,23 +10,69 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
   const [name, setName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
+    const normalizedName = name.trim().toLowerCase();
+    const normalizedPhone = contactNumber.trim();
+
+    if (!normalizedName) {
       setError('Please enter your name');
       return;
     }
 
-    if (!contactNumber.trim()) {
+    if (!normalizedPhone) {
       setError('Please enter your contact number');
       return;
     }
 
-    onSubmit(name, contactNumber);
+    setLoading(true);
+    setError('');
+    // Fetch all matching records (normalized)
+    const { data: existing, error: fetchError } = await supabase
+      .from('site_visitors')
+      .select('id')
+      .eq('name', normalizedName)
+      .eq('phone', normalizedPhone);
+    if (fetchError) {
+      setLoading(false);
+      setError('Failed to check your details. Please try again.');
+      return;
+    }
+    if (existing && existing.length > 0) {
+      setLoading(false);
+      setError('Thank you for registering.');
+      setTimeout(() => {
+        setError('');
+        onSubmit(normalizedName, normalizedPhone);
+      }, 2000);
+      return;
+    }
+    // Insert into Supabase if not found (normalized)
+    const { error: supabaseError } = await supabase
+      .from('site_visitors')
+      .insert([{ name: normalizedName, phone: normalizedPhone }]);
+    setLoading(false);
+    if (supabaseError) {
+      if (
+        supabaseError.code === '23505' || // Postgres unique violation
+        (supabaseError.message && supabaseError.message.includes('duplicate key'))
+      ) {
+        setError('Thank you for registering.');
+        setTimeout(() => {
+          setError('');
+          onSubmit(normalizedName, normalizedPhone);
+        }, 2000);
+        return;
+      }
+      setError('Failed to save your details. Please try again.');
+      return;
+    }
+    onSubmit(normalizedName, normalizedPhone);
   };
 
   return (
@@ -39,7 +86,7 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <div className={`px-4 py-3 rounded ${error === 'Thank you for registering.' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
                 {error}
               </div>
             )}
@@ -77,8 +124,9 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
             <button
               type="submit"
               className="w-full px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#5c4b3d] transition-colors"
+              disabled={loading}
             >
-              Continue to Website
+              {loading ? 'Saving...' : 'Continue to Website'}
             </button>
           </form>
         </div>

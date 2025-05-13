@@ -22,6 +22,9 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+const MAX_NOTIFICATIONS = 50; // Maximum number of notifications to keep
+const NOTIFICATION_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
@@ -32,24 +35,71 @@ export const useNotifications = () => {
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>(() => {
-    const savedNotifications = localStorage.getItem('notifications');
-    return savedNotifications ? JSON.parse(savedNotifications) : [];
+    try {
+      const savedNotifications = localStorage.getItem('notifications');
+      if (savedNotifications) {
+        const parsed = JSON.parse(savedNotifications);
+        // Clean up old notifications on load
+        const now = Date.now();
+        return parsed
+          .filter((n: Notification) => now - new Date(n.timestamp).getTime() < NOTIFICATION_TTL)
+          .slice(0, MAX_NOTIFICATIONS);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      return [];
+    }
   });
 
+  // Save notifications to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    } catch (error) {
+      console.error('Error saving notifications:', error);
+    }
   }, [notifications]);
 
-  const addNotification = (message: string, type: 'success' | 'error' | 'info', forAdmin: boolean = false) => {
-    const newNotification: Notification = {
-      id: String(Date.now()),
-      message,
-      type,
-      timestamp: new Date().toISOString(),
-      read: false,
-      forAdmin
+  // Cleanup old notifications periodically
+  useEffect(() => {
+    const cleanup = () => {
+      const now = Date.now();
+      setNotifications(prev => 
+        prev.filter(n => now - new Date(n.timestamp).getTime() < NOTIFICATION_TTL)
+      );
     };
-    setNotifications(prev => [newNotification, ...prev]);
+
+    const interval = setInterval(cleanup, 60000); // Run cleanup every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const addNotification = (message: string, type: 'success' | 'error' | 'info', forAdmin: boolean = false) => {
+    setNotifications(prev => {
+      // Remove duplicate error messages that occurred in the last minute
+      const now = Date.now();
+      const recentDuplicates = prev.filter(n => 
+        n.message === message && 
+        n.type === type && 
+        now - new Date(n.timestamp).getTime() < 60000
+      );
+
+      if (recentDuplicates.length > 0) {
+        return prev; // Don't add duplicate notifications
+      }
+
+      const newNotification: Notification = {
+        id: String(Date.now()),
+        message,
+        type,
+        timestamp: new Date().toISOString(),
+        read: false,
+        forAdmin
+      };
+
+      // Keep only the most recent notifications up to MAX_NOTIFICATIONS
+      return [newNotification, ...prev].slice(0, MAX_NOTIFICATIONS);
+    });
   };
 
   const markAsRead = (id: string) => {

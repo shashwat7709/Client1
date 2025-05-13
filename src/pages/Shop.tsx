@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
@@ -12,12 +12,23 @@ import ContactOwnerModal from '../components/ContactOwnerModal';
 
 const Shop: React.FC = () => {
   const navigate = useNavigate();
-  const { products, categories } = useProducts();
+  const { products, categories, isLoading, loadError } = useProducts();
   const { addToCart, getItemCount, getCartTotal, clearCart } = useCart();
   const { addNotification } = useNotifications();
 
-  // Add logging to see products being received
-  console.log('Shop component products:', products);
+  // Add detailed logging
+  useEffect(() => {
+    console.log('Shop component mounted');
+    console.log('Initial products:', products);
+    console.log('Initial categories:', categories);
+    console.log('Loading state:', isLoading);
+    console.log('Load error:', loadError);
+  }, []);
+
+  // Add logging for products updates
+  useEffect(() => {
+    console.log('Products updated in Shop:', products);
+  }, [products]);
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showCart, setShowCart] = useState(false);
@@ -88,6 +99,36 @@ const Shop: React.FC = () => {
       [productId]: prev[productId] < images.length - 1 ? prev[productId] + 1 : 0
     }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F1EA] py-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#46392d] mx-auto mb-4"></div>
+          <p className="text-[#46392d] text-lg">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[#F5F1EA] py-12 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error!</strong>
+            <span className="block sm:inline"> {loadError}</span>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F1EA] py-12">
