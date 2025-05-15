@@ -11,10 +11,6 @@ import UserRegistrationModal from './components/UserRegistrationModal';
 const ModalWrapper: React.FC = () => {
   const location = useLocation();
   const [showRegistration, setShowRegistration] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(() => {
-    const userData = localStorage.getItem('userData');
-    return !!userData;
-  });
 
   useEffect(() => {
     // Don't show registration modal on admin routes
@@ -22,25 +18,14 @@ const ModalWrapper: React.FC = () => {
       setShowRegistration(false);
       return;
     }
+    // Always show registration modal after 5 seconds
+    const timer = setTimeout(() => {
+      setShowRegistration(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
-    // Check if user is already registered
-    if (!isRegistered) {
-      console.log('User not registered, setting up timer...');
-      // Show registration modal after 5 seconds
-      const timer = setTimeout(() => {
-        console.log('Timer completed, showing registration modal...');
-        setShowRegistration(true);
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isRegistered, location.pathname]);
-
-  const handleRegistration = (name: string, contactNumber: string) => {
-    console.log('Registering user:', { name, contactNumber });
-    // Save user data to localStorage
-    localStorage.setItem('userData', JSON.stringify({ name, contactNumber }));
-    setIsRegistered(true);
+  const handleRegistration = () => {
     setShowRegistration(false);
   };
 
@@ -48,7 +33,7 @@ const ModalWrapper: React.FC = () => {
     <>
       {!location.pathname.startsWith('/admin') && (
         <UserRegistrationModal 
-          isOpen={!isRegistered && showRegistration} 
+          isOpen={showRegistration} 
           onSubmit={handleRegistration} 
         />
       )}

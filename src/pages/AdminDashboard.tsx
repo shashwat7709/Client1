@@ -427,7 +427,7 @@ const AdminDashboard: React.FC = () => {
                   {/* Image Gallery */}
                   <div className="space-y-4">
                     <div className="relative h-80 bg-[#46392d]/5 rounded-lg overflow-hidden">
-                      {selectedProduct.images.length > 0 ? (
+                      {Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0 ? (
                         <img
                           src={selectedProduct.images[currentImageIndex]}
                           alt={selectedProduct.title}
@@ -440,7 +440,7 @@ const AdminDashboard: React.FC = () => {
                       )}
                     </div>
                     
-                    {selectedProduct.images.length > 1 && (
+                    {Array.isArray(selectedProduct.images) && selectedProduct.images.length > 1 && (
                       <div className="flex gap-2 overflow-x-auto pb-2">
                         {selectedProduct.images.map((image, index) => (
                           <button
@@ -787,7 +787,7 @@ const AdminDashboard: React.FC = () => {
                     <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                       {/* Image Carousel */}
                       <div className="relative h-64 bg-[#46392d]/5">
-                        {product.images.length > 0 ? (
+                        {Array.isArray(product.images) && product.images.length > 0 ? (
                           <>
                             <img
                               src={product.images[currentImageIndex]}
@@ -957,7 +957,7 @@ const AdminDashboard: React.FC = () => {
                 >
                   {/* Image Carousel */}
                   <div className="relative h-64 bg-[#46392d]/5">
-                    {submission.images.length > 0 ? (
+                    {Array.isArray(submission.images) && submission.images.length > 0 ? (
                       <>
                         <img
                           src={submission.images[currentImageIndex]}

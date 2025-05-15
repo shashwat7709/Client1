@@ -100,8 +100,27 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         if (submissionsError) throw submissionsError;
 
-        setProducts(productsData || []);
-        setSubmissions(submissionsData || []);
+        // Normalize images field for products
+        const normalizedProducts = (productsData || []).map((product: any) => ({
+          ...product,
+          images: Array.isArray(product.images)
+            ? product.images
+            : typeof product.images === 'string'
+              ? (() => { try { const arr = JSON.parse(product.images); return Array.isArray(arr) ? arr : []; } catch { return []; } })()
+              : [],
+        }));
+        // Normalize images field for submissions
+        const normalizedSubmissions = (submissionsData || []).map((submission: any) => ({
+          ...submission,
+          images: Array.isArray(submission.images)
+            ? submission.images
+            : typeof submission.images === 'string'
+              ? (() => { try { const arr = JSON.parse(submission.images); return Array.isArray(arr) ? arr : []; } catch { return []; } })()
+              : [],
+        }));
+
+        setProducts(normalizedProducts);
+        setSubmissions(normalizedSubmissions);
         setLoadError(null);
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
