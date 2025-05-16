@@ -4,6 +4,14 @@ import { useProducts } from '../context/ProductContext';
 import type { Product, AntiqueSubmission } from '../context/ProductContext';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationIcon from '../components/NotificationIcon';
+import { supabase } from '../config/supabase';
+
+interface Offer {
+  id: string;
+  images: string[];
+  content: string;
+  created_at: string;
+}
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -33,7 +41,7 @@ const AdminDashboard: React.FC = () => {
   }, [products, categories, refreshKey]);
 
   const { addNotification } = useNotifications();
-  const [activeTab, setActiveTab] = useState<'products' | 'submissions'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters'>('products');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -409,6 +417,116 @@ const AdminDashboard: React.FC = () => {
   const [modalImages, setModalImages] = useState<string[]>([]);
   const [modalImageIndex, setModalImageIndex] = useState<number>(0);
 
+  // State for newsletter/offer form
+  const [newsletterImages, setNewsletterImages] = useState<string[]>([]);
+  const [newsletterContent, setNewsletterContent] = useState('');
+  const newsletterFileInputRef = useRef<HTMLInputElement>(null);
+  const [newsletterFormError, setNewsletterFormError] = useState('');
+
+  // Add state for loading and status for offers
+  const [offerLoading, setOfferLoading] = useState(false);
+  const [offerStatus, setOfferStatus] = useState('');
+
+  // Add state for offers
+  const [adminOffers, setAdminOffers] = useState<Offer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+  const [offerEditIndex, setOfferEditIndex] = useState<number | null>(null);
+
+  // Fetch offers from Supabase
+  useEffect(() => {
+    const fetchOffers = async () => {
+      setOffersLoading(true);
+      const { data, error } = await supabase
+        .from('admin_offers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setAdminOffers(data);
+      }
+      setOffersLoading(false);
+    };
+    fetchOffers();
+  }, [offerStatus]); // refetch on offer create/delete
+
+  // Delete offer handler
+  const handleDeleteOffer = async (id: string) => {
+    const { error } = await supabase.from('admin_offers').delete().eq('id', id);
+    if (!error) {
+      setAdminOffers(prev => prev.filter(o => o.id !== id));
+      setOfferStatus('Offer deleted successfully!');
+    } else {
+      setOfferStatus('Error deleting offer: ' + error.message);
+    }
+  };
+
+  // Newsletter image upload handler
+  const handleNewsletterImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    if (newsletterImages.length + files.length > 3) {
+      setNewsletterFormError('Maximum 3 images allowed');
+      return;
+    }
+    setNewsletterFormError('');
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setNewsletterImages(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
+  };
+
+  // Remove image from newsletterImages
+  const handleRemoveNewsletterImage = (index: number) => {
+    setNewsletterImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Add handler for publishing offer
+  const handleOfferPublish = async () => {
+    setOfferStatus('');
+    if (!newsletterContent.trim() || newsletterImages.length === 0) {
+      setOfferStatus('Please provide both images and content.');
+      return;
+    }
+    setOfferLoading(true);
+    if (offerEditIndex !== null && adminOffers[offerEditIndex]) {
+      // Update existing offer
+      const offerId = adminOffers[offerEditIndex].id;
+      const { error } = await supabase
+        .from('admin_offers')
+        .update({ images: newsletterImages, content: newsletterContent })
+        .eq('id', offerId);
+      setOfferLoading(false);
+      if (error) {
+        setOfferStatus('Error updating offer: ' + error.message);
+      } else {
+        setOfferStatus('Offer updated successfully!');
+        setNewsletterImages([]);
+        setNewsletterContent('');
+        setOfferEditIndex(null);
+        if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
+      }
+    } else {
+      // Insert new offer
+      const { error } = await supabase
+        .from('admin_offers')
+        .insert([{ images: newsletterImages, content: newsletterContent }]);
+      setOfferLoading(false);
+      if (error) {
+        setOfferStatus('Error: ' + error.message);
+      } else {
+        setOfferStatus('Offer published successfully!');
+        setNewsletterImages([]);
+        setNewsletterContent('');
+        if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F1EA] py-8">
       <div className="container mx-auto px-4">
@@ -564,6 +682,16 @@ const AdminDashboard: React.FC = () => {
                 {submissions.filter(s => s.status === 'pending').length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('newsletters')}
+            className={`px-6 py-2 rounded-md transition-colors ${
+              activeTab === 'newsletters'
+                ? 'bg-[#46392d] text-[#F5F1EA]'
+                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
+            }`}
+          >
+            Offers
           </button>
         </div>
 
@@ -1178,6 +1306,121 @@ const AdminDashboard: React.FC = () => {
               )}
             </div>
           </>
+        )}
+
+        {activeTab === 'newsletters' && (
+          <div className="space-y-8">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 max-w-2xl mx-auto">
+              <h3 className="text-xl font-serif text-[#46392d] mb-4">Create Offer</h3>
+              {newsletterFormError && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  {newsletterFormError}
+                </div>
+              )}
+              {offerStatus && (
+                <div className={`mb-4 px-4 py-3 rounded ${offerStatus.startsWith('Error') ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`}>{offerStatus}</div>
+              )}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Images</label>
+                  <input
+                    ref={newsletterFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleNewsletterImageUpload}
+                    className="hidden"
+                    multiple
+                    disabled={newsletterImages.length >= 3}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => newsletterFileInputRef.current?.click()}
+                    disabled={newsletterImages.length >= 3}
+                    className="w-full text-center border border-[#46392d]/20 rounded-md py-2 mb-2"
+                  >
+                    Upload Images (max 3)
+                  </button>
+                  {newsletterImages.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {newsletterImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`Offer Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNewsletterImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Content</label>
+                  <textarea
+                    value={newsletterContent}
+                    onChange={e => setNewsletterContent(e.target.value)}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d] h-32"
+                    placeholder="Write your offer content here..."
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#46392d]/90"
+                    onClick={handleOfferPublish}
+                    disabled={offerLoading}
+                  >
+                    {offerLoading ? 'Publishing...' : 'Publish'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Below Create Offer form, list all offers */}
+            {offersLoading ? (
+              <div className="text-center text-[#46392d]/60 py-8">Loading offers...</div>
+            ) : adminOffers.length === 0 ? (
+              <div className="text-center text-[#46392d]/60 py-8">No offers yet.</div>
+            ) : (
+              <div className="space-y-6 max-w-2xl mx-auto">
+                {adminOffers.map((offer, idx) => (
+                  <div key={offer.id} className="bg-white rounded-lg shadow p-4 border border-[#46392d]/10">
+                    <div className="flex flex-wrap gap-4 mb-2">
+                      {offer.images && offer.images.length > 0 && offer.images.map((img, i) => (
+                        <img key={i} src={img} alt={`Offer ${idx + 1} Image ${i + 1}`} className="w-24 h-24 object-cover rounded border border-[#46392d]/20" />
+                      ))}
+                    </div>
+                    <div className="text-[#46392d] mb-2 whitespace-pre-line">{offer.content}</div>
+                    <div className="text-xs text-[#46392d]/50 mb-2">{new Date(offer.created_at).toLocaleString()}</div>
+                    <div className="flex gap-2">
+                      <button
+                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                        onClick={() => {
+                          setNewsletterImages(offer.images);
+                          setNewsletterContent(offer.content);
+                          setOfferEditIndex(idx);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      >Edit</button>
+                      <button
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                        onClick={() => handleDeleteOffer(offer.id)}
+                      >Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
