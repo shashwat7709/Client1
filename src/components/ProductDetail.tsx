@@ -141,16 +141,10 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {/* Quick Info */}
-              <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="text-center p-4 bg-[#F5F1EA] rounded-lg">
                   <FaRegClock className="w-6 h-6 text-[#46392d] mx-auto mb-2" />
                   <p className="text-sm text-[#46392d]">Vintage Era</p>
-                  <p className="text-xs text-[#46392d]/70">1940s</p>
-                </div>
-                <div className="text-center p-4 bg-[#F5F1EA] rounded-lg">
-                  <FaShippingFast className="w-6 h-6 text-[#46392d] mx-auto mb-2" />
-                  <p className="text-sm text-[#46392d]">Free Shipping</p>
-                  <p className="text-xs text-[#46392d]/70">2-3 business days</p>
                 </div>
                 <div className="text-center p-4 bg-[#F5F1EA] rounded-lg">
                   <FaRegCheckCircle className="w-6 h-6 text-[#46392d] mx-auto mb-2" />
@@ -182,16 +176,6 @@ const ProductDetail: React.FC = () => {
                   >
                     Details
                   </button>
-                  <button
-                    onClick={() => setSelectedTab('shipping')}
-                    className={`px-6 py-3 text-sm font-medium transition-colors ${
-                      selectedTab === 'shipping'
-                        ? 'text-[#46392d] border-b-2 border-[#46392d]'
-                        : 'text-[#46392d]/60 hover:text-[#46392d]'
-                    }`}
-                  >
-                    Shipping
-                  </button>
                 </div>
 
                 <div className="py-6">
@@ -217,31 +201,10 @@ const ProductDetail: React.FC = () => {
                           <p className="text-sm text-[#46392d]/60">Condition</p>
                           <p className="text-[#46392d] font-medium">Excellent</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-[#46392d]/60">Era</p>
-                          <p className="text-[#46392d] font-medium">1940s</p>
-                        </div>
                       </div>
                     </div>
                   )}
-                  {selectedTab === 'shipping' && (
-                    <div className="space-y-4">
-                      <p className="text-[#46392d]/80">
-                        We offer free shipping on all orders within India. Orders are carefully packaged and typically ship within 1-2 business days.
-                        Delivery usually takes 2-3 business days depending on your location.
-                      </p>
-                      <div className="bg-[#F5F1EA] p-4 rounded-lg">
-                        <h4 className="font-medium text-[#46392d] mb-2">Shipping Policy</h4>
-                        <ul className="list-disc list-inside text-sm text-[#46392d]/80 space-y-1">
-                          <li>Professional antique packaging materials</li>
-                          <li>Careful packaging for fragile items</li>
-                          <li>Insurance included</li>
-                          <li>Real-time delivery updates</li>
-                          <li>White glove delivery service available</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
+                  {selectedTab === 'shipping' && false}
                 </div>
               </div>
 
