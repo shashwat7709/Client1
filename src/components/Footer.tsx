@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaInstagram, FaFacebook } from 'react-icons/fa';
+import { FaInstagram } from 'react-icons/fa';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -22,7 +22,7 @@ const Footer = () => {
             <h3 className="font-serif text-xl mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/collection" className="text-text-light/70 hover:text-text-light transition-colors">
+                <Link to="/shop" className="text-text-light/70 hover:text-text-light transition-colors">
                   Our Collection
                 </Link>
               </li>
@@ -43,18 +43,16 @@ const Footer = () => {
           <div>
             <h3 className="font-serif text-xl mb-4">Contact Us</h3>
             <ul className="space-y-2 text-text-light/70">
-              <li>Shop No 1, Sai Sagar Building</li>
-              <li>Near Kalyan Jewellers, MG Road, Camp</li>
-              <li>Pune, Maharashtra 411001</li>
-              <li>Phone: +91 98220 57567</li>
-              <li>Email: info@vintagecottage.com</li>
+              <li>Address - 919, Synagogue St, Camp, Pune, Maharashtra 411001</li>
+              <li>Phone: +9 86689 45632</li>
+              <li>Email: vintagecottage919@yahoo.com</li>
             </ul>
           </div>
 
           {/* Social Links */}
           <div>
-            <h3 className="font-serif text-xl mb-4">Follow Us</h3>
-            <div className="flex space-x-4">
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="font-serif text-xl">Follow Us</h3>
               <a
                 href="https://www.instagram.com/the_vintage_cottagee/"
                 target="_blank"
@@ -64,16 +62,6 @@ const Footer = () => {
               >
                 <span className="sr-only">Instagram</span>
                 <FaInstagram size={24} />
-              </a>
-              <a
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full border border-text-light/20 flex items-center justify-center text-text-light/70 hover:bg-primary hover:border-primary hover:text-text-light transition-all duration-300"
-                aria-label="Facebook"
-              >
-                <span className="sr-only">Facebook</span>
-                <FaFacebook size={24} />
               </a>
             </div>
           </div>

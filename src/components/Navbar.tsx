@@ -69,51 +69,51 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile menu */}
-        <div 
-          className={`md:hidden absolute w-full bg-white shadow-lg transition-all duration-300 ease-in-out ${
-            isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'
-          }`}
-        >
-          <div className="px-4 pt-2 pb-3 space-y-1">
-            <Link
-              to="/"
-              className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-              onClick={toggleMenu}
-            >
-              Home
-            </Link>
-            <Link
-              to="/about"
-              className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-              onClick={toggleMenu}
-            >
-              About
-            </Link>
-            <Link
-              to="/contact"
-              className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-              onClick={toggleMenu}
-            >
-              Contact
-            </Link>
-            <Link
-              to="/shop"
-              className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-              onClick={toggleMenu}
-            >
-              Shop
-            </Link>
-            <button
-              onClick={() => {
-                setIsSellModalOpen(true);
-                toggleMenu();
-              }}
-              className="block w-full text-left px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-            >
-              Sell Your Antiques
-            </button>
+        {isOpen && (
+          <div 
+            className="md:hidden absolute w-full bg-white shadow-lg transition-all duration-300 ease-in-out opacity-100 translate-y-0"
+          >
+            <div className="px-4 pt-2 pb-3 space-y-1">
+              <Link
+                to="/"
+                className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                Home
+              </Link>
+              <Link
+                to="/about"
+                className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                About
+              </Link>
+              <Link
+                to="/contact"
+                className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                Contact
+              </Link>
+              <Link
+                to="/shop"
+                className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                Shop
+              </Link>
+              <button
+                onClick={() => {
+                  setIsSellModalOpen(true);
+                  toggleMenu();
+                }}
+                className="block w-full text-left px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
+              >
+                Sell Your Antiques
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Add spacing below navbar */}

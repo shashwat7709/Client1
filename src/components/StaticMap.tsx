@@ -12,7 +12,7 @@ function StaticMap() {
         <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md">
           <h3 className="font-medium text-[#46392d] text-sm mb-1">The Vintage Cottage</h3>
           <p className="text-[#46392d]/70 text-xs">
-            Shop No 1, Sai Sagar Building, MG Road, Camp, Pune
+            Address - 919, Synagogue St, Camp, Pune, Maharashtra 411001
           </p>
         </div>
 
