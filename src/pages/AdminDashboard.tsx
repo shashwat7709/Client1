@@ -54,6 +54,7 @@ const AdminDashboard: React.FC = () => {
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
   const [selectedSubmissionCategory, setSelectedSubmissionCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [cardImageIndices, setCardImageIndices] = useState<{ [productId: string]: number }>({});
 
   // Add ref to track mounted state
   const isMounted = useRef(true);
@@ -388,6 +389,20 @@ const AdminDashboard: React.FC = () => {
   const handleCloseProductDetails = () => {
     setShowProductDetails(false);
     setSelectedProduct(null);
+  };
+
+  const handlePrevCardImage = (productId: string, images: string[]) => {
+    setCardImageIndices(prev => ({
+      ...prev,
+      [productId]: prev[productId] > 0 ? prev[productId] - 1 : images.length - 1
+    }));
+  };
+
+  const handleNextCardImage = (productId: string, images: string[]) => {
+    setCardImageIndices(prev => ({
+      ...prev,
+      [productId]: prev[productId] < images.length - 1 ? prev[productId] + 1 : 0
+    }));
   };
 
   return (
@@ -783,114 +798,129 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredProducts.map((product) => (
-                    <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                      {/* Image Carousel */}
-                      <div className="relative h-64 bg-[#46392d]/5">
-                        {Array.isArray(product.images) && product.images.length > 0 ? (
-                          <>
-                            <img
-                              src={product.images[currentImageIndex]}
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                              onClick={() => setSelectedImage(product.images[currentImageIndex])}
-                            />
-                            {product.images.length > 1 && (
-                              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                                {product.images.map((_, index) => (
+                  {filteredProducts.map((product) => {
+                    const currentIndex = cardImageIndices[product.id] || 0;
+                    const images = product.images || [];
+                    return (
+                      <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        {/* Image Carousel */}
+                        <div className="relative h-64 bg-[#46392d]/5">
+                          {Array.isArray(images) && images.length > 0 ? (
+                            <>
+                              <img
+                                src={images[currentIndex]}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                                onClick={() => setSelectedImage(images[currentIndex])}
+                              />
+                              {images.length > 1 && (
+                                <>
                                   <button
-                                    key={index}
-                                    onClick={() => setCurrentImageIndex(index)}
-                                    className={`w-2 h-2 rounded-full ${
-                                      currentImageIndex === index ? 'bg-[#46392d]' : 'bg-[#46392d]/30'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#46392d]/40">
-                            No image available
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-xl font-serif text-[#46392d] font-medium hover:text-[#5c4b3d] transition-colors">
-                            {product.title}
-                          </h3>
-                          <span className="px-3 py-1 bg-[#46392d]/10 rounded-full text-[#46392d] text-sm font-medium">
-                            {product.category}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          {/* Description Section */}
-                          <div className="prose prose-sm max-w-none">
-                            <p className="text-[#46392d]/80 leading-relaxed">
-                              {expandedDescriptions[product.id] 
-                                ? product.description 
-                                : truncateDescription(product.description)}
-                              {product.description.length > 100 && (
-                                <button
-                                  onClick={() => toggleDescription(product.id)}
-                                  className="ml-2 text-[#46392d] hover:text-[#5c4b3d] font-medium text-sm"
-                                >
-                                  {expandedDescriptions[product.id] ? 'Show Less' : 'Show More'}
-                                </button>
+                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1"
+                                    onClick={() => handlePrevCardImage(product.id, images)}
+                                    aria-label="Previous image"
+                                  >&#8592;</button>
+                                  <button
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1"
+                                    onClick={() => handleNextCardImage(product.id, images)}
+                                    aria-label="Next image"
+                                  >&#8594;</button>
+                                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                                    {images.map((_, index) => (
+                                      <button
+                                        key={index}
+                                        onClick={() => setCardImageIndices(prev => ({ ...prev, [product.id]: index }))}
+                                        className={`w-2 h-2 rounded-full ${currentIndex === index ? 'bg-[#46392d]' : 'bg-[#46392d]/30'}`}
+                                        aria-label={`Go to image ${index + 1}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </>
                               )}
-                            </p>
-                          </div>
-
-                          {/* Details Grid */}
-                          <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-[#46392d]/10">
-                            <div>
-                              <p className="text-sm text-[#46392d]/60">Subject</p>
-                              <p className="text-[#46392d] font-medium">{product.subject}</p>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[#46392d]/40">
+                              No image available
                             </div>
-                            <div>
-                              <p className="text-sm text-[#46392d]/60">Price</p>
-                              <p className="text-[#46392d] font-bold text-lg">₹{product.price.toLocaleString('en-IN')}</p>
-                            </div>
-                          </div>
+                          )}
+                        </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex justify-end space-x-3 pt-2">
-                            <button
-                              onClick={() => handleViewProduct(product)}
-                              className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#46392d]/90 transition-colors duration-200 flex items-center space-x-2"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              <span>View</span>
-                            </button>
-                            <button
-                              onClick={() => handleEdit(product)}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              <span>Edit</span>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product.id)}
-                              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center space-x-2"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              <span>Delete</span>
-                            </button>
+                        <div className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-serif text-[#46392d] font-medium hover:text-[#5c4b3d] transition-colors">
+                              {product.title}
+                            </h3>
+                            <span className="px-3 py-1 bg-[#46392d]/10 rounded-full text-[#46392d] text-sm font-medium">
+                              {product.category}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            {/* Description Section */}
+                            <div className="prose prose-sm max-w-none">
+                              <p className="text-[#46392d]/80 leading-relaxed">
+                                {expandedDescriptions[product.id] 
+                                  ? product.description 
+                                  : truncateDescription(product.description)}
+                                {product.description.length > 100 && (
+                                  <button
+                                    onClick={() => toggleDescription(product.id)}
+                                    className="ml-2 text-[#46392d] hover:text-[#5c4b3d] font-medium text-sm"
+                                  >
+                                    {expandedDescriptions[product.id] ? 'Show Less' : 'Show More'}
+                                  </button>
+                                )}
+                              </p>
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-[#46392d]/10">
+                              <div>
+                                <p className="text-sm text-[#46392d]/60">Subject</p>
+                                <p className="text-[#46392d] font-medium">{product.subject}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-[#46392d]/60">Price</p>
+                                <p className="text-[#46392d] font-bold text-lg">₹{product.price.toLocaleString('en-IN')}</p>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end space-x-3 pt-2">
+                              <button
+                                onClick={() => handleViewProduct(product)}
+                                className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#46392d]/90 transition-colors duration-200 flex items-center space-x-2"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <span>View</span>
+                              </button>
+                              <button
+                                onClick={() => handleEdit(product)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(product.id)}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center space-x-2"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span>Delete</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -996,7 +1026,8 @@ const AdminDashboard: React.FC = () => {
                               ? 'bg-amber-100 text-amber-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {submission.category === 'Antique' ? 'Antique' : 'General'} Submission
+                            {submission.category === 'Antique' 
+                              ? 'Antique' : 'General'}
                           </span>
                           <span className={`px-2 py-1 text-sm rounded-full ${
                             submission.status === 'pending'
@@ -1082,8 +1113,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               ))}
-              
-              {submissions.length === 0 && (
+              {filteredAndSortedSubmissions.length === 0 && (
                 <div className="text-center py-12 text-[#46392d]/70">
                   No submissions to review at this time.
                 </div>
@@ -1096,4 +1126,4 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
