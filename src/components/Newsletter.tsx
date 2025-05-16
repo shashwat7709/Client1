@@ -60,23 +60,48 @@ const Newsletter = () => {
               <span className="text-[#46392d]/40 text-lg font-serif">No active offers at the moment.<br />Stay tuned for upcoming deals!</span>
             </div>
           ) : (
-            <div className="grid gap-8">
+            <div className="grid gap-12">
               {offers.map((offer) => (
-                <div key={offer.id} className="bg-white/80 rounded-lg border border-[#46392d]/10 shadow p-6 text-left">
+                <div
+                  key={offer.id}
+                  className="relative bg-gradient-to-br from-[#fff8f1] to-[#f5f1ea] rounded-3xl border border-[#e2d6c2] shadow-2xl p-10 md:p-14 max-w-3xl mx-auto flex flex-col md:flex-row items-center gap-8 overflow-hidden group transition-transform hover:scale-[1.025] hover:shadow-3xl"
+                >
+                  {/* Decorative Ribbon */}
+                  <div className="absolute top-0 left-0 bg-[#e6cfa7] text-[#46392d] px-6 py-2 rounded-br-2xl text-lg font-bold shadow-md z-10">
+                    Special Offer
+                  </div>
+                  {/* Images Carousel (simple horizontal scroll for now) */}
                   {offer.images && offer.images.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-4 mb-4">
+                    <div className="flex flex-row md:flex-col gap-4 md:gap-6 md:mr-8 overflow-x-auto md:overflow-x-visible w-full md:w-56 min-w-[180px] max-w-xs md:max-w-none">
                       {offer.images.map((img, idx) => (
                         <img
                           key={idx}
                           src={img}
                           alt={`Offer ${offer.id} Image ${idx + 1}`}
-                          className="w-40 h-40 object-cover rounded-md border border-[#46392d]/20"
+                          className="w-36 h-36 md:w-48 md:h-48 object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white"
                         />
                       ))}
                     </div>
                   )}
-                  <div className="text-[#46392d] text-lg font-serif mb-2 whitespace-pre-line">{offer.content}</div>
-                  <div className="text-xs text-[#46392d]/50 text-right">{new Date(offer.created_at).toLocaleDateString()}</div>
+                  {/* Offer Content */}
+                  <div className="flex-1 flex flex-col justify-between h-full w-full md:w-auto">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="inline-block bg-[#46392d] text-[#fff8f1] px-4 py-1 rounded-full text-base font-semibold tracking-wide shadow">LIMITED TIME</span>
+                        <span className="text-xs text-[#46392d]/50 ml-auto">{new Date(offer.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="text-[#46392d] text-2xl md:text-3xl font-serif font-bold mb-4 whitespace-pre-line leading-snug">
+                        {offer.content}
+                      </div>
+                    </div>
+                    <button
+                      className="mt-6 self-start bg-gradient-to-r from-[#46392d] to-[#7c6247] text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold hover:from-[#7c6247] hover:to-[#46392d] transition-colors focus:outline-none focus:ring-4 focus:ring-[#e6cfa7]/50"
+                    >
+                      Shop Now
+                    </button>
+                  </div>
+                  {/* Decorative background shape */}
+                  <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-[#e6cfa7]/30 rounded-full blur-2xl z-0" />
                 </div>
               ))}
             </div>
