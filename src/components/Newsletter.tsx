@@ -72,13 +72,13 @@ const Newsletter = () => {
                   </div>
                   {/* Images Row (carousel style, above content) */}
                   {offer.images && offer.images.length > 0 && (
-                    <div className="flex flex-row justify-center gap-4 w-full mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide px-4 snap-x snap-mandatory">
+                    <div className="flex flex-row justify-center gap-4 w-full mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide snap-x snap-mandatory">
                       {offer.images.map((img, idx) => (
                         <img
                           key={idx}
                           src={img}
                           alt={`Offer ${offer.id} Image ${idx + 1}`}
-                          className="w-36 h-36 md:w-44 md:h-44 max-w-[80vw] object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white inline-block snap-center"
+                          className={`w-36 h-36 md:w-44 md:h-44 max-w-[80vw] object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white inline-block snap-center shrink-0 ${idx === 0 ? 'ml-2' : ''} ${idx === offer.images.length - 1 ? 'mr-2' : ''}`}
                         />
                       ))}
                     </div>
