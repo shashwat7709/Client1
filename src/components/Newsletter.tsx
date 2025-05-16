@@ -1,7 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { supabase } from '../config/supabase';
 
 const Newsletter = () => {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('');
+    setLoading(true);
+    const { error } = await supabase
+      .from('heritage_circle')
+      .insert([{ email }]);
+    setLoading(false);
+    if (error) {
+      setStatus(error.message.includes('duplicate') ? 'You are already subscribed!' : 'Error: ' + error.message);
+    } else {
+      setStatus('Thank you for subscribing!');
+      setEmail('');
+    }
+  };
+
   return (
     <section className="py-24 bg-[#F5F1EA] relative overflow-hidden">
       {/* Decorative Elements */}
@@ -25,16 +46,25 @@ const Newsletter = () => {
             Subscribe to receive updates about new arrivals, exclusive invitations to cultural events, and insights into Indian heritage
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-xl mx-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-xl mx-auto">
             <input
               type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               placeholder="Enter your email address"
               className="w-full px-4 py-2.5 rounded-md bg-white border border-[#46392d]/20 text-[#46392d] placeholder-[#46392d]/50"
+              disabled={loading}
             />
-            <button className="whitespace-nowrap px-6 py-2.5 bg-[#46392d] text-[#F5F1EA] rounded-md hover:bg-[#46392d]/90 transition-colors duration-300 font-display text-sm tracking-wide">
-              Subscribe Now
+            <button
+              type="submit"
+              className="whitespace-nowrap px-6 py-2.5 bg-[#46392d] text-[#F5F1EA] rounded-md hover:bg-[#46392d]/90 transition-colors duration-300 font-display text-sm tracking-wide"
+              disabled={loading}
+            >
+              {loading ? 'Subscribing...' : 'Subscribe Now'}
             </button>
-          </div>
+          </form>
+          {status && <div className="mt-2 text-[#46392d] text-sm">{status}</div>}
 
           <p className="text-[#46392d]/60 text-sm mt-4">
             By subscribing, you agree to receive our newsletter. Your privacy is important to us.
