@@ -64,36 +64,38 @@ const Newsletter = () => {
               {offers.map((offer) => (
                 <div
                   key={offer.id}
-                  className="relative bg-gradient-to-br from-[#fff8f1] to-[#f5f1ea] rounded-3xl border border-[#e2d6c2] shadow-2xl p-8 md:p-12 max-w-3xl mx-auto flex flex-col items-center gap-4 overflow-hidden group transition-transform hover:scale-[1.025] hover:shadow-3xl"
+                  className="relative bg-gradient-to-br from-[#fff8f1] to-[#f5f1ea] rounded-3xl border border-[#e2d6c2] shadow-2xl p-10 md:p-14 max-w-3xl mx-auto flex flex-col md:flex-row items-center gap-8 overflow-hidden group transition-transform hover:scale-[1.025] hover:shadow-3xl"
                 >
                   {/* Decorative Ribbon */}
                   <div className="absolute top-0 left-0 bg-[#e6cfa7] text-[#46392d] px-6 py-2 rounded-br-2xl text-lg font-bold shadow-md z-10">
                     Special Offer
                   </div>
-                  {/* Images Row (carousel style, above content) */}
+                  {/* Images Carousel (simple horizontal scroll for now) */}
                   {offer.images && offer.images.length > 0 && (
-                    <div className="flex flex-row justify-center gap-4 w-full mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide snap-x snap-mandatory">
+                    <div className="flex flex-row md:flex-col gap-4 md:gap-6 md:mr-8 overflow-x-auto md:overflow-x-visible w-full md:w-56 min-w-[180px] max-w-xs md:max-w-none">
                       {offer.images.map((img, idx) => (
                         <img
                           key={idx}
                           src={img}
                           alt={`Offer ${offer.id} Image ${idx + 1}`}
-                          className={`w-36 h-36 md:w-44 md:h-44 max-w-[80vw] object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white inline-block snap-center shrink-0 ${idx === 0 ? 'ml-2' : ''} ${idx === offer.images.length - 1 ? 'mr-2' : ''}`}
+                          className="w-36 h-36 md:w-48 md:h-48 object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white"
                         />
                       ))}
                     </div>
                   )}
                   {/* Offer Content */}
-                  <div className="w-full flex flex-col items-center">
-                    <div className="flex items-center gap-3 mb-2 w-full justify-center">
-                      <span className="inline-block bg-[#46392d] text-[#fff8f1] px-4 py-1 rounded-full text-base font-semibold tracking-wide shadow">LIMITED TIME</span>
-                      <span className="text-xs text-[#46392d]/50 ml-auto">{new Date(offer.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="text-[#46392d] text-2xl md:text-3xl font-serif font-bold mb-2 whitespace-pre-line leading-snug text-center">
-                      {offer.content}
+                  <div className="flex-1 flex flex-col justify-between h-full w-full md:w-auto">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="inline-block bg-[#46392d] text-[#fff8f1] px-4 py-1 rounded-full text-base font-semibold tracking-wide shadow">LIMITED TIME</span>
+                        <span className="text-xs text-[#46392d]/50 ml-auto">{new Date(offer.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="text-[#46392d] text-2xl md:text-3xl font-serif font-bold mb-4 whitespace-pre-line leading-snug">
+                        {offer.content}
+                      </div>
                     </div>
                     <button
-                      className="mt-2 bg-gradient-to-r from-[#46392d] to-[#7c6247] text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold hover:from-[#7c6247] hover:to-[#46392d] transition-colors focus:outline-none focus:ring-4 focus:ring-[#e6cfa7]/50"
+                      className="mt-6 self-start bg-gradient-to-r from-[#46392d] to-[#7c6247] text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold hover:from-[#7c6247] hover:to-[#46392d] transition-colors focus:outline-none focus:ring-4 focus:ring-[#e6cfa7]/50"
                     >
                       Shop Now
                     </button>
