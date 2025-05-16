@@ -405,6 +405,10 @@ const AdminDashboard: React.FC = () => {
     }));
   };
 
+  // Add new state for modal images and index
+  const [modalImages, setModalImages] = useState<string[]>([]);
+  const [modalImageIndex, setModalImageIndex] = useState<number>(0);
+
   return (
     <div className="min-h-screen bg-[#F5F1EA] py-8">
       <div className="container mx-auto px-4">
@@ -564,17 +568,63 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Image Modal */}
-        {selectedImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="relative max-w-4xl w-full mx-4">
+        {selectedImage && modalImages.length > 0 && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div
+              className="relative max-w-4xl w-full mx-4"
+              onClick={e => e.stopPropagation()}
+            >
               <img
-                src={selectedImage}
+                src={modalImages[modalImageIndex]}
                 alt="Selected"
-                className="w-full h-auto rounded-lg"
+                className="w-full h-auto rounded-lg object-contain max-h-[80vh]"
               />
+              {/* Left arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white rounded-full p-2 z-20 hover:bg-opacity-90"
+                  onClick={() => {
+                    setModalImageIndex((prev) => prev === 0 ? modalImages.length - 1 : prev - 1);
+                    setSelectedImage(modalImages[modalImageIndex === 0 ? modalImages.length - 1 : modalImageIndex - 1]);
+                  }}
+                  style={{ zIndex: 21 }}
+                >&#8592;</button>
+              )}
+              {/* Right arrow */}
+              {modalImages.length > 1 && (
+                <button
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white rounded-full p-2 z-20 hover:bg-opacity-90"
+                  onClick={() => {
+                    setModalImageIndex((prev) => prev === modalImages.length - 1 ? 0 : prev + 1);
+                    setSelectedImage(modalImages[modalImageIndex === modalImages.length - 1 ? 0 : modalImageIndex + 1]);
+                  }}
+                  style={{ zIndex: 21 }}
+                >&#8594;</button>
+              )}
+              {/* Dots */}
+              {modalImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
+                  {modalImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setModalImageIndex(idx);
+                        setSelectedImage(modalImages[idx]);
+                      }}
+                      className={`w-3 h-3 rounded-full ${modalImageIndex === idx ? 'bg-white' : 'bg-white/50'}`}
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              {/* Close button */}
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75"
+                className="absolute top-4 right-4 z-30 text-white bg-black bg-opacity-70 rounded-full p-2 hover:bg-opacity-90"
+                style={{ zIndex: 30 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -811,7 +861,11 @@ const AdminDashboard: React.FC = () => {
                                 src={images[currentIndex]}
                                 alt={product.title}
                                 className="w-full h-full object-cover"
-                                onClick={() => setSelectedImage(images[currentIndex])}
+                                onClick={() => {
+                                  setModalImages(images);
+                                  setModalImageIndex(currentIndex);
+                                  setSelectedImage(images[currentIndex]);
+                                }}
                               />
                               {images.length > 1 && (
                                 <>
@@ -993,7 +1047,11 @@ const AdminDashboard: React.FC = () => {
                           src={submission.images[currentImageIndex]}
                           alt={submission.title}
                           className="w-full h-full object-cover"
-                          onClick={() => setSelectedImage(submission.images[currentImageIndex])}
+                          onClick={() => {
+                            setModalImages(submission.images);
+                            setModalImageIndex(currentImageIndex);
+                            setSelectedImage(submission.images[currentImageIndex]);
+                          }}
                         />
                         {submission.images.length > 1 && (
                           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
