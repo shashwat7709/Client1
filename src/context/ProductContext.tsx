@@ -136,9 +136,17 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
+      // Insert the product with all images in the images array
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([{
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          category: product.category,
+          subject: product.subject,
+          images: product.images // Store all images in the images array
+        }])
         .select()
         .single();
 
@@ -149,6 +157,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (error) {
       console.error('Error adding product:', error);
       addNotification('Failed to add product', 'error');
+      throw error; // Re-throw to handle in the component
     }
   };
 

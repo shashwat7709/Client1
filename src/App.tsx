@@ -6,28 +6,79 @@ import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
 import AppRoutes from './AppRoutes';
 import UserRegistrationModal from './components/UserRegistrationModal';
+import { supabase } from './config/supabase';
 
 // Wrapper component to handle modal visibility based on route
 const ModalWrapper: React.FC = () => {
   const location = useLocation();
   const [showRegistration, setShowRegistration] = useState(false);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
 
   useEffect(() => {
-    // Don't show registration modal on admin routes
-    if (location.pathname.startsWith('/admin')) {
-      setShowRegistration(false);
-      return;
-    }
-    // Always show registration modal after 5 seconds
-    const timer = setTimeout(() => {
-      setShowRegistration(true);
-    }, 5000);
-    return () => clearTimeout(timer);
+    const checkRegistration = async () => {
+      // Don't show registration modal on admin routes
+      if (location.pathname.startsWith('/admin')) {
+        setShowRegistration(false);
+        setIsCheckingRegistration(false);
+        return;
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const { data } = await supabase
+            .from('user_registrations')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (data) {
+            setShowRegistration(false);
+          } else {
+            // Show registration modal after 5 seconds if user hasn't registered
+            const timer = setTimeout(() => {
+              setShowRegistration(true);
+            }, 5000);
+            return () => clearTimeout(timer);
+          }
+        } else {
+          // Create anonymous session if no session exists
+          const { data: { session: newSession } } = await supabase.auth.signInAnonymously();
+          if (newSession) {
+            // Check if this anonymous user has registered
+            const { data } = await supabase
+              .from('user_registrations')
+              .select('*')
+              .eq('user_id', newSession.user.id)
+              .single();
+            
+            if (!data) {
+              // Show registration modal after 5 seconds if user hasn't registered
+              const timer = setTimeout(() => {
+                setShowRegistration(true);
+              }, 5000);
+              return () => clearTimeout(timer);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking registration:', error);
+      } finally {
+        setIsCheckingRegistration(false);
+      }
+    };
+
+    checkRegistration();
   }, [location.pathname]);
 
   const handleRegistration = () => {
     setShowRegistration(false);
   };
+
+  if (isCheckingRegistration) {
+    return null; // Or a loading spinner if you prefer
+  }
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 
 interface UserRegistrationModalProps {
@@ -11,8 +11,34 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasRegistered, setHasRegistered] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    // Check if user has already registered
+    const checkRegistration = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data } = await supabase
+            .from('user_registrations')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (data) {
+            setHasRegistered(true);
+            onSubmit(data.name, data.contact_number);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking registration:', err);
+      }
+    };
+    
+    checkRegistration();
+  }, []);
+
+  if (!isOpen || hasRegistered) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,47 +58,49 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
 
     setLoading(true);
     setError('');
-    // Fetch all matching records (normalized)
-    const { data: existing, error: fetchError } = await supabase
-      .from('site_visitors')
-      .select('id')
-      .eq('name', normalizedName)
-      .eq('phone', normalizedPhone);
-    if (fetchError) {
-      setLoading(false);
-      setError('Failed to check your details. Please try again.');
-      return;
-    }
-    if (existing && existing.length > 0) {
-      setLoading(false);
-      setError('Thank you for registering.');
-      setTimeout(() => {
-        setError('');
-        onSubmit(normalizedName, normalizedPhone);
-      }, 2000);
-      return;
-    }
-    // Insert into Supabase if not found (normalized)
-    const { error: supabaseError } = await supabase
-      .from('site_visitors')
-      .insert([{ name: normalizedName, phone: normalizedPhone }]);
-    setLoading(false);
-    if (supabaseError) {
-      if (
-        supabaseError.code === '23505' || // Postgres unique violation
-        (supabaseError.message && supabaseError.message.includes('duplicate key'))
-      ) {
-        setError('Thank you for registering.');
-        setTimeout(() => {
-          setError('');
-          onSubmit(normalizedName, normalizedPhone);
-        }, 2000);
-        return;
+
+    try {
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Create anonymous session
+        const { data: { session: newSession }, error: authError } = await supabase.auth.signInAnonymously();
+        if (authError) throw authError;
+        
+        // Store registration in Supabase
+        const { error: insertError } = await supabase
+          .from('user_registrations')
+          .insert([{ 
+            user_id: newSession?.user.id,
+            name: normalizedName,
+            contact_number: normalizedPhone,
+            registered_at: new Date().toISOString()
+          }]);
+          
+        if (insertError) throw insertError;
+      } else {
+        // Store registration for existing session
+        const { error: insertError } = await supabase
+          .from('user_registrations')
+          .insert([{ 
+            user_id: session.user.id,
+            name: normalizedName,
+            contact_number: normalizedPhone,
+            registered_at: new Date().toISOString()
+          }]);
+          
+        if (insertError) throw insertError;
       }
+
+      setHasRegistered(true);
+      onSubmit(normalizedName, normalizedPhone);
+    } catch (err) {
+      console.error('Registration error:', err);
       setError('Failed to save your details. Please try again.');
-      return;
+    } finally {
+      setLoading(false);
     }
-    onSubmit(normalizedName, normalizedPhone);
   };
 
   return (
