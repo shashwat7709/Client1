@@ -20,51 +20,81 @@ const ModalWrapper: React.FC = () => {
       if (location.pathname.startsWith('/admin')) {
         setShowRegistration(false);
         setIsCheckingRegistration(false);
+        console.log('ModalWrapper: On admin route, hiding modal.'); // Debug log
         return;
       }
 
       try {
+        console.log('ModalWrapper: Checking for existing session...'); // Debug log
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          const { data } = await supabase
+          console.log('ModalWrapper: Session found.', session.user.id); // Debug log
+          console.log('ModalWrapper: Checking user_registrations table...'); // Debug log
+          const { data, error: selectError } = await supabase
             .from('user_registrations')
             .select('*')
             .eq('user_id', session.user.id)
             .single();
           
+          if (selectError) {
+            console.error('ModalWrapper: Error fetching registration:', selectError);
+          }
+
           if (data) {
+            console.log('ModalWrapper: User registered, hiding modal.', data); // Debug log
             setShowRegistration(false);
           } else {
+            console.log('ModalWrapper: User not registered, setting timeout to show modal.'); // Debug log
             // Show registration modal after 5 seconds if user hasn't registered
             const timer = setTimeout(() => {
+              console.log('ModalWrapper: Timeout finished, showing modal.'); // Debug log
               setShowRegistration(true);
             }, 5000);
             return () => clearTimeout(timer);
           }
         } else {
+          console.log('ModalWrapper: No session found, attempting anonymous sign-in...'); // Debug log
           // Create anonymous session if no session exists
-          const { data: { session: newSession } } = await supabase.auth.signInAnonymously();
+          const { data: { session: newSession }, error: authError } = await supabase.auth.signInAnonymously();
+          if (authError) {
+             console.error('ModalWrapper: Anonymous sign-in error:', authError); // Debug log
+             throw authError;
+          }
+
           if (newSession) {
+             console.log('ModalWrapper: Anonymous session created.', newSession.user.id); // Debug log
             // Check if this anonymous user has registered
-            const { data } = await supabase
+            console.log('ModalWrapper: Checking user_registrations for new anonymous user...'); // Debug log
+            const { data, error: selectError } = await supabase
               .from('user_registrations')
               .select('*')
               .eq('user_id', newSession.user.id)
               .single();
             
+            if (selectError) {
+              console.error('ModalWrapper: Error fetching registration for new user:', selectError); // Debug log
+            }
+
             if (!data) {
+              console.log('ModalWrapper: New anonymous user not registered, setting timeout to show modal.'); // Debug log
               // Show registration modal after 5 seconds if user hasn't registered
               const timer = setTimeout(() => {
+                 console.log('ModalWrapper: Timeout finished for new user, showing modal.'); // Debug log
                 setShowRegistration(true);
               }, 5000);
               return () => clearTimeout(timer);
+            } else {
+               console.log('ModalWrapper: New anonymous user found existing registration.', data); // Debug log
             }
+          } else {
+             console.log('ModalWrapper: Anonymous sign-in returned no session.'); // Debug log
           }
         }
       } catch (error) {
-        console.error('Error checking registration:', error);
+        console.error('ModalWrapper: General error during registration check:', error); // Debug log
       } finally {
+        console.log('ModalWrapper: Finished registration check.'); // Debug log
         setIsCheckingRegistration(false);
       }
     };
