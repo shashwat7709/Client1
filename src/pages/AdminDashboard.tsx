@@ -5,12 +5,20 @@ import type { Product, AntiqueSubmission } from '../context/ProductContext';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationIcon from '../components/NotificationIcon';
 import { supabase } from '../config/supabase';
+import { Dialog } from '@headlessui/react';
 
 interface Offer {
   id: string;
   images: string[];
   content: string;
   created_at: string;
+}
+
+interface EditSubmissionForm {
+  id: string;
+  item_title: string;
+  description: string;
+  asking_price: number | '';
 }
 
 const AdminDashboard: React.FC = () => {
@@ -20,10 +28,7 @@ const AdminDashboard: React.FC = () => {
     categories, 
     addProduct, 
     updateProduct, 
-    deleteProduct,
-    submissions,
-    updateSubmission,
-    deleteSubmission
+    deleteProduct
   } = useProducts();
 
   // Add a refresh function
@@ -77,15 +82,29 @@ const AdminDashboard: React.FC = () => {
     };
   }, []);
 
-  // Add effect to handle submissions updates
+  // Submissions state from Supabase
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!isMounted.current) return;
-    
-    console.log('Submissions updated in AdminDashboard:', submissions);
-    
-    // Force a re-render of the submissions list
-    setSelectedSubmissionCategory(prev => prev);
-  }, [submissions]);
+    const fetchSubmissions = async () => {
+      setSubmissionsLoading(true);
+      setSubmissionsError(null);
+      const { data, error } = await supabase
+        .from('antique_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        setSubmissionsError('Failed to load submissions');
+        setSubmissions([]);
+      } else {
+        setSubmissions(data || []);
+      }
+      setSubmissionsLoading(false);
+    };
+    fetchSubmissions();
+  }, []);
 
   // Move filteredProducts inside the component
   const filteredProducts = selectedCategory === 'All'
@@ -94,40 +113,28 @@ const AdminDashboard: React.FC = () => {
 
   // Consolidated filteredAndSortedSubmissions with useMemo
   const filteredAndSortedSubmissions = useMemo(() => {
-    console.log('Recalculating filtered submissions with:', {
-      submissions,
-      selectedSubmissionCategory,
-      sortBy
-    });
-
-    // Create a new array to avoid mutation
     let filtered = [...submissions];
-    
-    // Apply category filter
+    // Apply category filter (if you want to filter by item_title or another field, adjust here)
     if (selectedSubmissionCategory !== 'all') {
       filtered = filtered.filter(sub => 
-        sub.category.toLowerCase() === selectedSubmissionCategory.toLowerCase()
+        (sub.item_title || '').toLowerCase().includes(selectedSubmissionCategory.toLowerCase())
       );
-      console.log('After category filter:', filtered);
     }
-    
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'oldest':
-          return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'highPrice':
-          return b.price - a.price;
+          return Number(b.asking_price) - Number(a.asking_price);
         case 'lowPrice':
-          return a.price - b.price;
+          return Number(a.asking_price) - Number(b.asking_price);
         default:
           return 0;
       }
     });
-
-    console.log('Final sorted submissions:', sorted);
     return sorted;
   }, [submissions, selectedSubmissionCategory, sortBy]);
 
@@ -350,37 +357,42 @@ const AdminDashboard: React.FC = () => {
     }));
   };
 
-  const handleDeleteSubmission = (submissionId: string) => {
-    if (window.confirm('Are you sure you want to delete this submission?')) {
-      deleteSubmission(submissionId);
+  // Add state for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
+
+  // Update handleDeleteSubmission to use modal
+  const handleDeleteClick = (submissionId: string) => {
+    setSubmissionToDelete(submissionId);
+    setShowDeleteModal(true);
+  };
+  const handleConfirmDelete = async () => {
+    if (!submissionToDelete) return;
+    const { error } = await supabase.from('antique_submissions').delete().eq('id', submissionToDelete);
+    if (error) {
+      addNotification('Failed to delete submission: ' + error.message, 'error', true);
+    } else {
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionToDelete));
+      addNotification('Submission deleted successfully!', 'success', true);
     }
+    setShowDeleteModal(false);
+    setSubmissionToDelete(null);
+  };
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setSubmissionToDelete(null);
   };
 
   const handleApproveSubmission = (submission: AntiqueSubmission) => {
-    updateSubmission({
-      ...submission,
-      status: 'approved'
-    });
+    // Implement the approve submission logic here
   };
 
   const handleRejectSubmission = (submission: AntiqueSubmission) => {
-    updateSubmission({
-      ...submission,
-      status: 'rejected'
-    });
+    // Implement the reject submission logic here
   };
 
   const handleAddToShop = (submission: AntiqueSubmission) => {
-    addProduct({
-      title: submission.title,
-      description: submission.description,
-      price: submission.price,
-      category: submission.category,
-      images: submission.images,
-      subject: submission.subject
-    });
-    // Refresh products display
-    refreshProducts();
+    // Implement the add to shop logic here
   };
 
   // Add a function to view product details
@@ -524,6 +536,61 @@ const AdminDashboard: React.FC = () => {
         setNewsletterContent('');
         if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
       }
+    }
+  };
+
+  // Add state for editing submissions
+  const [editingSubmission, setEditingSubmission] = useState(null);
+  const [editSubmissionForm, setEditSubmissionForm] = useState<EditSubmissionForm>({
+    id: '',
+    item_title: '',
+    description: '',
+    asking_price: ''
+  });
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Edit logic
+  const openEditModal = (submission: any) => {
+    setEditingSubmission(submission);
+    setEditSubmissionForm({
+      id: submission.id || '',
+      item_title: submission.item_title || '',
+      description: submission.description || '',
+      asking_price: submission.asking_price || ''
+    });
+    setEditModalOpen(true);
+    setEditError('');
+  };
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingSubmission(null);
+    setEditSubmissionForm({
+      id: '',
+      item_title: '',
+      description: '',
+      asking_price: ''
+    });
+    setEditError('');
+  };
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditSubmissionForm((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleUpdateSubmission = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError('');
+    const { id, ...updateFields } = editSubmissionForm;
+    const { error } = await supabase.from('antique_submissions').update(updateFields).eq('id', id);
+    setEditLoading(false);
+    if (error) {
+      setEditError('Failed to update submission: ' + error.message);
+    } else {
+      setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updateFields } : s)));
+      addNotification('Submission updated successfully!', 'success', true);
+      closeEditModal();
     }
   };
 
@@ -1160,146 +1227,76 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* Error message if fetch failed */}
+            {submissionsError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {submissionsError}
+              </div>
+            )}
+
             {/* Submissions Grid */}
             <div className="grid gap-6">
               {filteredAndSortedSubmissions.map((submission) => (
                 <div 
                   key={submission.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-xl shadow border border-[#e2d6c2] max-w-md mx-auto flex flex-col md:flex-row md:max-w-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
-                  {/* Image Carousel */}
-                  <div className="relative h-64 bg-[#46392d]/5">
+                  {/* Image */}
+                  <div className="relative w-full md:w-48 h-40 md:h-auto flex-shrink-0 bg-[#46392d]/5">
                     {Array.isArray(submission.images) && submission.images.length > 0 ? (
-                      <>
-                        <img
-                          src={submission.images[currentImageIndex]}
-                          alt={submission.title}
-                          className="w-full h-full object-cover"
-                          onClick={() => {
-                            setModalImages(submission.images);
-                            setModalImageIndex(currentImageIndex);
-                            setSelectedImage(submission.images[currentImageIndex]);
-                          }}
-                        />
-                        {submission.images.length > 1 && (
-                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                            {submission.images.map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setCurrentImageIndex(index)}
-                                className={`w-2 h-2 rounded-full ${
-                                  currentImageIndex === index ? 'bg-[#46392d]' : 'bg-[#46392d]/30'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </>
+                      <img
+                        src={submission.images[0]}
+                        alt={submission.item_title}
+                        className="w-full h-full object-cover cursor-pointer rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
+                        onClick={() => {
+                          setModalImages(submission.images);
+                          setModalImageIndex(0);
+                          setSelectedImage(submission.images[0]);
+                        }}
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#46392d]/40">
-                        No image available
+                      <div className="w-full h-full flex items-center justify-center text-[#46392d]/40 text-sm">
+                        No image
                       </div>
                     )}
                   </div>
-
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-serif text-[#46392d]">{submission.title}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`px-2 py-1 text-sm rounded-full ${
-                            submission.category === 'Antique' 
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {submission.category === 'Antique' 
-                              ? 'Antique' : 'General'}
-                          </span>
-                          <span className={`px-2 py-1 text-sm rounded-full ${
-                            submission.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : submission.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#46392d]/70">{submission.description}</p>
-                        <p className="text-[#46392d] font-medium mt-2">₹{submission.price}</p>
-                        <p className="text-sm text-[#46392d]/70">Category: {submission.category}</p>
-                        <p className="text-sm text-[#46392d]/70">Phone: {submission.phone}</p>
-                        <p className="text-sm text-[#46392d]/70">Address: {submission.address}</p>
-                        <p className="text-sm text-[#46392d]/70">Submitted: {new Date(submission.submittedAt).toLocaleDateString()}</p>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <button
-                          onClick={() => handleDeleteSubmission(submission.id)}
-                          className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                          title="Delete submission"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        {submission.status === 'pending' ? (
-                          <>
-                            <button
-                              onClick={() => handleApproveSubmission(submission)}
-                              className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 mr-2"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectSubmission(submission)}
-                              className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-3 py-1 rounded-md ${
-                              submission.status === 'approved' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
-                            </span>
-                            {submission.status === 'approved' && (
-                              <button
-                                onClick={() => handleAddToShop(submission)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                              >
-                                Add to Shop
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
+                  <div className="flex-1 flex flex-col justify-between p-4 md:p-5">
                     <div>
-                      <p className="text-[#46392d]/70 mb-4">{submission.description}</p>
-                      <div className="space-y-2">
-                        <p className="text-[#46392d]">
-                          <strong>Category:</strong> {submission.category}
-                        </p>
-                        <p className="text-[#46392d]">
-                          <strong>Asking Price:</strong> ₹{submission.price}
-                        </p>
-                        <p className="text-[#46392d]">
-                          <strong>Phone:</strong> {submission.phone}
-                        </p>
-                        <p className="text-[#46392d]">
-                          <strong>Address:</strong> {submission.address}
-                        </p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">{submission.item_title}</h3>
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Submission</span>
                       </div>
+                      <p className="text-xs text-[#46392d]/70 mb-1 truncate max-w-[220px]">{submission.description}</p>
+                      <p className="text-base text-[#46392d] font-semibold mb-1">₹{submission.asking_price}</p>
+                      <p className="text-xs text-[#46392d]/70 mb-0.5">Name: {submission.name}</p>
+                      <p className="text-xs text-[#46392d]/70 mb-0.5">Phone: {submission.phone_country_code} {submission.phone_number}</p>
+                      <p className="text-xs text-[#46392d]/70 mb-0.5">Address: {submission.address}</p>
+                      <p className="text-xs text-[#46392d]/40">Submitted: {new Date(submission.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2 justify-end mt-2">
+                      <button
+                        onClick={() => handleDeleteClick(submission.id)}
+                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                        title="Delete submission"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => openEditModal(submission)}
+                        className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Edit submission"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M17.414 2.586a2 2 0 00-2.828 0l-9.9 9.9a1 1 0 00-.263.465l-1 4a1 1 0 001.213 1.213l4-1a1 1 0 00.465-.263l9.9-9.9a2 2 0 000-2.828zM15 4l1 1-9.293 9.293-1-1L15 4z" clipRule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
-              {filteredAndSortedSubmissions.length === 0 && (
+              {filteredAndSortedSubmissions.length === 0 && !submissionsError && (
                 <div className="text-center py-12 text-[#46392d]/70">
                   No submissions to review at this time.
                 </div>
@@ -1423,6 +1420,78 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Submission Modal */}
+      {editModalOpen && (
+        <Dialog open={editModalOpen} onClose={closeEditModal} className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-30 z-40" />
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 z-50 relative">
+              <Dialog.Title className="text-xl font-serif text-[#46392d] mb-4">Edit Submission</Dialog.Title>
+              {editError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-2">{editError}</div>}
+              <form onSubmit={handleUpdateSubmission} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Title</label>
+                  <input
+                    type="text"
+                    name="item_title"
+                    value={editSubmissionForm.item_title || ''}
+                    onChange={handleEditFormChange}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    value={editSubmissionForm.description || ''}
+                    onChange={handleEditFormChange}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Asking Price</label>
+                  <input
+                    type="number"
+                    name="asking_price"
+                    value={editSubmissionForm.asking_price || ''}
+                    onChange={handleEditFormChange}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={closeEditModal} className="px-4 py-2 border border-[#46392d] text-[#46392d] rounded-md hover:bg-[#46392d]/10">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#46392d]/90" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full relative">
+            <h3 className="text-xl font-serif text-[#46392d] mb-4">Confirm Deletion</h3>
+            <p className="mb-6 text-[#46392d]">Are you sure you want to delete this submission? This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 border border-[#46392d] text-[#46392d] rounded-md hover:bg-[#46392d]/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

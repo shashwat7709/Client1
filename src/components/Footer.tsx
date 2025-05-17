@@ -44,7 +44,7 @@ const Footer = () => {
             <h3 className="font-serif text-xl mb-4">Contact Us</h3>
             <ul className="space-y-2 text-text-light/70">
               <li>Address - 919, Synagogue St, Camp, Pune, Maharashtra 411001</li>
-              <li>Phone: +9 86689 45632</li>
+              <li>Phone: +91 86689 45632</li>
               <li>Email: vintagecottage919@yahoo.com</li>
             </ul>
           </div>

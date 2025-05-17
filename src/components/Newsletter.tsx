@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../config/supabase';
+import { useNavigate } from 'react-router-dom';
 
 interface Offer {
   id: string;
@@ -12,6 +13,7 @@ interface Offer {
 const Newsletter = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -64,44 +66,41 @@ const Newsletter = () => {
               {offers.map((offer) => (
                 <div
                   key={offer.id}
-                  className="relative bg-gradient-to-br from-[#fff8f1] to-[#f5f1ea] rounded-3xl border border-[#e2d6c2] shadow-2xl p-10 md:p-14 max-w-3xl mx-auto flex flex-col md:flex-row items-center gap-8 overflow-hidden group transition-transform hover:scale-[1.025] hover:shadow-3xl"
+                  className="relative bg-gradient-to-br from-[#fff8f1] to-[#f5f1ea] rounded-3xl border border-[#e2d6c2] shadow-2xl px-4 pt-8 pb-6 md:pt-12 md:pb-10 md:px-10 max-w-3xl mx-auto flex flex-col items-center overflow-visible group transition-transform hover:scale-[1.015] hover:shadow-3xl"
                 >
-                  {/* Decorative Ribbon */}
-                  <div className="absolute top-0 left-0 bg-[#e6cfa7] text-[#46392d] px-6 py-2 rounded-br-2xl text-lg font-bold shadow-md z-10">
+                  {/* Special Offer Tab */}
+                  <div className="absolute -top-6 left-0 w-56 sm:w-64 md:w-72 h-12 flex items-center bg-[#e6cfa7] text-[#46392d] text-2xl font-bold shadow-lg rounded-tl-3xl rounded-tr-2xl rounded-br-2xl z-10 border border-[#e2d6c2] justify-start pl-6" style={{borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1rem', borderBottomRightRadius: '1rem'}}>
                     Special Offer
                   </div>
-                  {/* Images Carousel (simple horizontal scroll for now) */}
+                  {/* Images Row */}
                   {offer.images && offer.images.length > 0 && (
-                    <div className="flex flex-row md:flex-col gap-4 md:gap-6 md:mr-8 overflow-x-auto md:overflow-x-visible w-full md:w-56 min-w-[180px] max-w-xs md:max-w-none">
+                    <div className="flex flex-row justify-center gap-4 w-full mt-8 mb-6">
                       {offer.images.map((img, idx) => (
                         <img
                           key={idx}
                           src={img}
                           alt={`Offer ${offer.id} Image ${idx + 1}`}
-                          className="w-36 h-36 md:w-48 md:h-48 object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md transition-transform group-hover:scale-105 hover:ring-4 hover:ring-[#e6cfa7]/40 cursor-pointer bg-white"
+                          className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border-2 border-[#e2d6c2] shadow-md bg-white"
                         />
                       ))}
                     </div>
                   )}
-                  {/* Offer Content */}
-                  <div className="flex-1 flex flex-col justify-between h-full w-full md:w-auto">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="inline-block bg-[#46392d] text-[#fff8f1] px-4 py-1 rounded-full text-base font-semibold tracking-wide shadow">LIMITED TIME</span>
-                        <span className="text-xs text-[#46392d]/50 ml-auto">{new Date(offer.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="text-[#46392d] text-2xl md:text-3xl font-serif font-bold mb-4 whitespace-pre-line leading-snug">
-                        {offer.content}
-                      </div>
-                    </div>
-                    <button
-                      className="mt-6 self-start bg-gradient-to-r from-[#46392d] to-[#7c6247] text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold hover:from-[#7c6247] hover:to-[#46392d] transition-colors focus:outline-none focus:ring-4 focus:ring-[#e6cfa7]/50"
-                    >
-                      Shop Now
-                    </button>
+                  {/* Details Section */}
+                  <div className="flex items-center justify-between w-full max-w-2xl mb-2 px-2">
+                    <span className="inline-block bg-[#46392d] text-[#fff8f1] px-6 py-2 rounded-full text-base font-semibold tracking-wide shadow">LIMITED TIME</span>
+                    <span className="text-xs text-[#46392d]/50 ml-2">{new Date(offer.created_at).toLocaleDateString()}</span>
                   </div>
-                  {/* Decorative background shape */}
-                  <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-[#e6cfa7]/30 rounded-full blur-2xl z-0" />
+                  {/* Offer Content */}
+                  <div className="text-[#46392d]/90 text-xl md:text-2xl font-serif text-center mb-6 whitespace-pre-line leading-relaxed px-4 md:px-8 font-normal tracking-normal">
+                    {offer.content}
+                  </div>
+                  {/* Call to Action */}
+                  <button
+                    className="mx-auto bg-gradient-to-r from-[#46392d] to-[#7c6247] text-white px-10 py-3 rounded-xl shadow-lg text-lg font-semibold hover:from-[#7c6247] hover:to-[#46392d] transition-colors focus:outline-none focus:ring-4 focus:ring-[#e6cfa7]/50"
+                    onClick={() => navigate('/shop')}
+                  >
+                    Shop Now
+                  </button>
                 </div>
               ))}
             </div>

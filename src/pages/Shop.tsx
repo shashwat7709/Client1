@@ -30,6 +30,16 @@ const Shop: React.FC = () => {
     console.log('Products updated in Shop:', products);
   }, [products]);
 
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const indices: { [key: string]: number } = {};
+      products.forEach(product => {
+        indices[product.id] = 0;
+      });
+      setCurrentImageIndices(indices);
+    }
+  }, [products]);
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<null | { id: string; title: string; price: number }>(null);
@@ -188,7 +198,7 @@ const Shop: React.FC = () => {
               <div className="relative overflow-hidden">
                 <img
                   src={product.images && product.images.length > 0 
-                    ? product.images[currentImageIndices[product.id] || 0] 
+                    ? product.images[currentImageIndices[product.id]] 
                     : '/placeholder.svg'}
                   alt={product.title}
                   className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
@@ -228,7 +238,7 @@ const Shop: React.FC = () => {
                         <div
                           key={index}
                           className={`w-2 h-2 rounded-full transition-colors ${
-                            index === (currentImageIndices[product.id] || 0)
+                            index === currentImageIndices[product.id]
                               ? 'bg-white'
                               : 'bg-white/50'
                           }`}
