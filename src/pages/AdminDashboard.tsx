@@ -1244,16 +1244,16 @@ const AdminDashboard: React.FC = () => {
                   {/* Image */}
                   <div className="relative w-full md:w-48 h-40 md:h-auto flex-shrink-0 bg-[#46392d]/5">
                     {Array.isArray(submission.images) && submission.images.length > 0 ? (
-                      <img
+                        <img
                         src={submission.images[0]}
                         alt={submission.item_title}
                         className="w-full h-full object-cover cursor-pointer rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
-                        onClick={() => {
-                          setModalImages(submission.images);
+                          onClick={() => {
+                            setModalImages(submission.images);
                           setModalImageIndex(0);
                           setSelectedImage(submission.images[0]);
-                        }}
-                      />
+                          }}
+                        />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[#46392d]/40 text-sm">
                         No image
@@ -1261,37 +1261,37 @@ const AdminDashboard: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1 flex flex-col justify-between p-4 md:p-5">
-                    <div>
+                      <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">{submission.item_title}</h3>
                         <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Submission</span>
-                      </div>
+                        </div>
                       <p className="text-xs text-[#46392d]/70 mb-1 truncate max-w-[220px]">{submission.description}</p>
                       <p className="text-base text-[#46392d] font-semibold mb-1">₹{submission.asking_price}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Name: {submission.name}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Phone: {submission.phone_country_code} {submission.phone_number}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Address: {submission.address}</p>
                       <p className="text-xs text-[#46392d]/40">Submitted: {new Date(submission.created_at).toLocaleDateString()}</p>
-                    </div>
+                      </div>
                     <div className="flex items-center gap-2 justify-end mt-2">
-                      <button
+                        <button
                         onClick={() => handleDeleteClick(submission.id)}
-                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                        title="Delete submission"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                      <button
+                          className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                          title="Delete submission"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                            <button
                         onClick={() => openEditModal(submission)}
                         className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                         title="Edit submission"
-                      >
+                            >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M17.414 2.586a2 2 0 00-2.828 0l-9.9 9.9a1 1 0 00-.263.465l-1 4a1 1 0 001.213 1.213l4-1a1 1 0 00.465-.263l9.9-9.9a2 2 0 000-2.828zM15 4l1 1-9.293 9.293-1-1L15 4z" clipRule="evenodd" />
                         </svg>
-                      </button>
+                            </button>
                     </div>
                   </div>
                 </div>
