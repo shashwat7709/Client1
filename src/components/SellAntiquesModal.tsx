@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useProducts } from '../context/ProductContext';
 import { useNotifications } from '../context/NotificationContext';
+import { supabase } from '../config/supabase';
 
 interface SellAntiquesModalProps {
   isOpen: boolean;
@@ -113,14 +114,6 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
 
     const filesArray = Array.from(files);
     
-    if (images.length + filesArray.length > 3) {
-      setError('Maximum 3 images allowed');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
     filesArray.forEach((file) => {
       if (!file.type.startsWith('image/')) {
         setError('Please upload only image files');
@@ -152,15 +145,16 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
     const form = e.currentTarget;
     
     // Get form data
-    const title = (form.elements.namedItem('itemTitle') as HTMLInputElement).value;
+    const item_title = (form.elements.namedItem('itemTitle') as HTMLInputElement).value;
     const description = (form.elements.namedItem('description') as HTMLTextAreaElement).value;
-    const price = parseFloat((form.elements.namedItem('price') as HTMLInputElement).value);
-    const phone = `${phoneCode}${(form.elements.namedItem('phone') as HTMLInputElement).value}`;
+    const asking_price = parseFloat((form.elements.namedItem('price') as HTMLInputElement).value);
+    const phone_number = (form.elements.namedItem('phone') as HTMLInputElement).value;
     const address = (form.elements.namedItem('address') as HTMLTextAreaElement).value;
     const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+    const phone_country_code = phoneCode;
 
     // Validate form
-    if (!title || !description || !price || !phone || !address || !name) {
+    if (!item_title || !description || !asking_price || !phone_number || !address || !name) {
       setError('Please fill in all required fields');
       setIsSubmitting(false);
       return;
@@ -172,36 +166,38 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
       return;
     }
 
-    // Create submission with category explicitly set to 'Antique'
+    // Create submission with correct schema
     const submission = {
-      title,
-      description,
-      price,
-      category: 'Antique',
-      images,
-      phone,
-      address,
       name,
-      subject: title,
-      submittedAt: new Date().toISOString()
+      item_title,
+      description,
+      address,
+      phone_country_code,
+      phone_number,
+      asking_price,
+      images,
+      created_at: new Date().toISOString()
     };
 
     try {
-      // Add the submission
-      await addSubmission(submission);
-      
+      // Insert into Supabase
+      const { error: supabaseError } = await supabase.from('antique_submissions').insert([submission]);
+      if (supabaseError) {
+        setError('Failed to submit. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
       // Show success notification
       addNotification('Your antique item has been submitted successfully!', 'success', false);
-      
+      // Close the modal
+      onClose();
       // Reset form state
       setImages([]);
       setError('');
       setIsSubmitting(false);
-      
-      // Close the modal after a short delay to show the success message
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      if (formRef.current) {
+        formRef.current.reset();
+      }
     } catch (error) {
       console.error('Submission error:', error);
       setError('Failed to submit your item. Please try again.');
@@ -305,12 +301,12 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
           </div>
 
           <div>
-            <label htmlFor="price" className="block text-[#46392d] font-medium mb-2">Asking Price ($)</label>
+            <label htmlFor="price" className="block text-[#46392d] font-medium mb-2">Asking Price (₹)</label>
             <input
               type="number"
               id="price"
               className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
-              placeholder="Enter your asking price"
+              placeholder="Enter your asking price in rupees"
               required
             />
           </div>
@@ -321,9 +317,7 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
               <label className="block text-[#46392d] font-medium">
                 Product Images
               </label>
-              <span className="text-sm text-[#46392d]/60">
-                Maximum 3 images allowed ({images.length}/3)
-              </span>
+              {/* No image count limit shown */}
             </div>
             
             <div className="border-2 border-dashed border-[#46392d]/20 rounded-lg p-4 hover:border-[#46392d]/40 transition-colors">
@@ -334,26 +328,17 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
                 onChange={handleImageUpload}
                 className="hidden"
                 multiple
-                disabled={images.length >= 3}
               />
               <div 
-                onClick={() => images.length < 3 && fileInputRef.current?.click()}
-                className={`cursor-pointer flex flex-col items-center justify-center py-6 ${
-                  images.length >= 3 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer flex flex-col items-center justify-center py-6"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#46392d]/40 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <p className="text-sm text-[#46392d]/60 text-center">
-                  {images.length >= 3 ? (
-                    'Maximum images reached'
-                  ) : (
-                    <>
-                      Click to upload images<br />
-                      <span className="text-xs">PNG, JPG, GIF up to 5MB</span>
-                    </>
-                  )}
+                  Click to upload images<br />
+                  <span className="text-xs">PNG, JPG, GIF up to 5MB</span>
                 </p>
               </div>
             </div>

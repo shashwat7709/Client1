@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StaticMap from './StaticMap';
+import { supabase } from '../config/supabase';
 
 const ContactSection: React.FC = () => {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus(null);
+    // Insert into Supabase
+    const { error } = await supabase.from('contact_messages').insert([
+      { name: form.name, email: form.email, message: form.message }
+    ]);
+    if (error) {
+      setStatus('Failed to send message. Please try again.');
+    } else {
+      setStatus('Message sent successfully!');
+      setForm({ name: '', email: '', message: '' });
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F1EA] py-16">
       <div className="container mx-auto px-4">
@@ -36,7 +62,7 @@ const ContactSection: React.FC = () => {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
-                      <span>+9 86689 45632</span>
+                      <span>+91 86689 45632</span>
                     </p>
                     <p className="flex items-center space-x-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +117,7 @@ const ContactSection: React.FC = () => {
           {/* Contact Form */}
           <div className="mt-8 bg-white rounded-lg shadow-md p-8">
             <h2 className="text-2xl font-serif text-[#46392d] mb-6">Send us a Message</h2>
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-[#46392d] mb-2">
                   Your Name
@@ -99,8 +125,11 @@ const ContactSection: React.FC = () => {
                 <input
                   type="text"
                   id="name"
+                  value={form.name}
+                  onChange={handleChange}
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   placeholder="Enter your name"
+                  required
                 />
               </div>
 
@@ -111,8 +140,11 @@ const ContactSection: React.FC = () => {
                 <input
                   type="email"
                   id="email"
+                  value={form.email}
+                  onChange={handleChange}
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   placeholder="Enter your email"
+                  required
                 />
               </div>
 
@@ -123,8 +155,11 @@ const ContactSection: React.FC = () => {
                 <textarea
                   id="message"
                   rows={4}
+                  value={form.message}
+                  onChange={handleChange}
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   placeholder="Enter your message"
+                  required
                 ></textarea>
               </div>
 
@@ -132,9 +167,13 @@ const ContactSection: React.FC = () => {
                 <button
                   type="submit"
                   className="px-6 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#5c4b3d] transition-colors"
+                  disabled={loading}
                 >
-                  Send Message
+                  {loading ? 'Sending...' : 'Send Message'}
                 </button>
+                {status && (
+                  <div className={`mt-4 text-sm ${status.includes('success') ? 'text-green-600' : 'text-red-600'}`}>{status}</div>
+                )}
               </div>
             </form>
           </div>
