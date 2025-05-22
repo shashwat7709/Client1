@@ -19,11 +19,16 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('user_registrations')
             .select('*')
             .eq('user_id', session.user.id)
-            .single();
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error checking registration:', error);
+            return;
+          }
           
           if (data) {
             setHasRegistered(true);
@@ -76,7 +81,9 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
             name: normalizedName,
             contact_number: normalizedPhone,
             registered_at: new Date().toISOString()
-          }]);
+          }])
+          .select()
+          .single();
           
         if (insertError) throw insertError;
       } else {
@@ -88,7 +95,9 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
             name: normalizedName,
             contact_number: normalizedPhone,
             registered_at: new Date().toISOString()
-          }]);
+          }])
+          .select()
+          .single();
           
         if (insertError) throw insertError;
       }

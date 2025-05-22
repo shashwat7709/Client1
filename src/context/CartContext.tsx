@@ -56,7 +56,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .from('products') // Assuming you have a 'products' table
       .select('id, title, price, images')
       .in('id', productIds);
-
+      
     if (productError) {
       console.error('Error fetching product details for cart items:', productError);
       // Optionally add a user-facing notification here
