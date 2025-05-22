@@ -6,6 +6,7 @@ import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
 import AppRoutes from './AppRoutes';
 import UserRegistrationModal from './components/UserRegistrationModal';
+import WhatsAppButton from './components/WhatsAppButton';
 import { supabase } from './config/supabase';
 
 // Wrapper component to handle modal visibility based on route
@@ -35,10 +36,13 @@ const ModalWrapper: React.FC = () => {
             .from('user_registrations')
             .select('*')
             .eq('user_id', session.user.id)
-            .single();
+            .maybeSingle();
           
           if (selectError) {
             console.error('ModalWrapper: Error fetching registration:', selectError);
+            // Don't show registration modal on error
+            setShowRegistration(false);
+            return;
           }
 
           if (data) {
@@ -70,10 +74,13 @@ const ModalWrapper: React.FC = () => {
               .from('user_registrations')
               .select('*')
               .eq('user_id', newSession.user.id)
-              .single();
+              .maybeSingle();
             
             if (selectError) {
-              console.error('ModalWrapper: Error fetching registration for new user:', selectError); // Debug log
+              console.error('ModalWrapper: Error fetching registration for new user:', selectError);
+              // Don't show registration modal on error
+              setShowRegistration(false);
+              return;
             }
 
             if (!data) {
@@ -85,7 +92,8 @@ const ModalWrapper: React.FC = () => {
               }, 5000);
               return () => clearTimeout(timer);
             } else {
-               console.log('ModalWrapper: New anonymous user found existing registration.', data); // Debug log
+              console.log('ModalWrapper: New anonymous user found existing registration.', data); // Debug log
+              setShowRegistration(false);
             }
           } else {
              console.log('ModalWrapper: Anonymous sign-in returned no session.'); // Debug log
@@ -132,6 +140,7 @@ const App: React.FC = () => {
           <CartProvider>
             <div className="min-h-screen bg-[#F5F1EA]">
               <ModalWrapper />
+              <WhatsAppButton />
             </div>
           </CartProvider>
         </ProductProvider>

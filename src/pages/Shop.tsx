@@ -287,15 +287,6 @@ const Shop: React.FC = () => {
                     >
                       Your Offer
                     </button>
-                    <button
-                      className="bg-[#46392d]/10 text-[#46392d] px-4 py-2 rounded-md hover:bg-[#46392d]/20 transition-colors"
-                      onClick={() => {
-                        setSelectedProductForContact(product);
-                        setShowContactModal(true);
-                      }}
-                    >
-                      Contact Owner
-                    </button>
                   </div>
                 </div>
               </div>
