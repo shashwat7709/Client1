@@ -81,6 +81,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Load data from Supabase on component mount
   useEffect(() => {
     const loadData = async () => {
+      console.log('Attempting to load data...'); // Log to confirm function entry
       try {
         setIsLoading(true);
         
@@ -122,8 +123,10 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setProducts(normalizedProducts);
         setSubmissions(normalizedSubmissions);
         setLoadError(null);
-      } catch (error) {
-        console.error('Error loading data from Supabase:', error);
+      } catch (error: any) {
+        console.error('Caught error during data loading:', error);
+        // Log the full error object as a string to ensure output
+        console.error('Full error details (stringified):', JSON.stringify(error, Object.getOwnPropertyNames(error)));
         setLoadError('Failed to load data. Please refresh the page.');
         addNotification('Failed to load data. Please refresh the page.', 'error');
       } finally {

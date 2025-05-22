@@ -75,6 +75,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const addNotification = (message: string, type: 'success' | 'error' | 'info', forAdmin: boolean = false) => {
+    console.log('addNotification called with:', { message, type, forAdmin }); // Log notification details
     setNotifications(prev => {
       // Remove duplicate error messages that occurred in the last minute
       const now = Date.now();
