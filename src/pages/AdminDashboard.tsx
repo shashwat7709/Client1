@@ -6,6 +6,23 @@ import { useNotifications } from '../context/NotificationContext';
 import NotificationIcon from '../components/NotificationIcon';
 import { supabase } from '../config/supabase';
 import { Dialog } from '@headlessui/react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Trash2, Pencil, Eye, X, Plus, Upload } from 'lucide-react';
+import ImageModal from '@/components/ImageModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Offer {
   id: string;
@@ -21,25 +38,11 @@ interface AdminOffer {
   created_at: string;
 }
 
-interface UserOffer {
-  id: string;
-  created_at: string;
-  session_id: string;
-  product_id: string;
-  offer_amount: number;
-  offer_message: string | null;
-  offerer_name: string;
-  offerer_contact: string;
-  status: 'pending' | 'approved' | 'declined';
-  // Joined product details (will be an array because 'products' is a table name)
-  products: { title: string; images: string[]; price: number; subject: string }[] | null;
-}
-
 interface EditSubmissionForm {
   id: string;
-  item_title: string;
+  title: string;
   description: string;
-  asking_price: number | '';
+  price: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -47,8 +50,12 @@ const AdminDashboard: React.FC = () => {
   const { 
     products, 
     categories, 
-    addProduct, 
-    updateProduct, 
+    submissions,
+    addSubmission,
+    updateSubmission,
+    deleteSubmission,
+    addProduct,
+    updateProduct,
     deleteProduct
   } = useProducts();
 
@@ -67,7 +74,7 @@ const AdminDashboard: React.FC = () => {
   }, [products, categories, refreshKey]);
 
   const { addNotification } = useNotifications();
-  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters' | 'user_offers'>('products');
+  const [activeTab, setActiveTab] = useState('products');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -103,30 +110,6 @@ const AdminDashboard: React.FC = () => {
     };
   }, []);
 
-  // Submissions state from Supabase
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      setSubmissionsLoading(true);
-      setSubmissionsError(null);
-      const { data, error } = await supabase
-        .from('antique_submissions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) {
-        setSubmissionsError('Failed to load submissions');
-        setSubmissions([]);
-      } else {
-        setSubmissions(data || []);
-      }
-      setSubmissionsLoading(false);
-    };
-    fetchSubmissions();
-  }, []);
-
   // Move filteredProducts inside the component
   const filteredProducts = selectedCategory === 'All'
     ? products
@@ -138,7 +121,7 @@ const AdminDashboard: React.FC = () => {
     // Apply category filter (if you want to filter by item_title or another field, adjust here)
     if (selectedSubmissionCategory !== 'all') {
       filtered = filtered.filter(sub => 
-        (sub.item_title || '').toLowerCase().includes(selectedSubmissionCategory.toLowerCase())
+        (sub.title || '').toLowerCase().includes(selectedSubmissionCategory.toLowerCase())
       );
     }
     // Apply sorting
@@ -149,9 +132,9 @@ const AdminDashboard: React.FC = () => {
         case 'oldest':
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'highPrice':
-          return Number(b.asking_price) - Number(a.asking_price);
+          return Number(b.price) - Number(a.price);
         case 'lowPrice':
-          return Number(a.asking_price) - Number(b.asking_price);
+          return Number(a.price) - Number(b.price);
         default:
           return 0;
       }
@@ -388,16 +371,15 @@ const AdminDashboard: React.FC = () => {
     setShowDeleteModal(true);
   };
   const handleConfirmDelete = async () => {
-    if (!submissionToDelete) return;
-    const { error } = await supabase.from('antique_submissions').delete().eq('id', submissionToDelete);
-    if (error) {
-      addNotification('Failed to delete submission: ' + error.message, 'error', true);
-    } else {
-      setSubmissions((prev) => prev.filter((s) => s.id !== submissionToDelete));
-      addNotification('Submission deleted successfully!', 'success', true);
+    if (submissionToDelete) {
+      try {
+        await deleteSubmission(submissionToDelete);
+        setSubmissionToDelete(null);
+      } catch (error) {
+        console.error('Error deleting submission:', error);
+        // Error handling is in context, maybe add a local state for delete error
+      }
     }
-    setShowDeleteModal(false);
-    setSubmissionToDelete(null);
   };
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
@@ -465,11 +447,6 @@ const AdminDashboard: React.FC = () => {
   const [offersLoading, setOffersLoading] = useState(true);
   const [offerEditIndex, setOfferEditIndex] = useState<number | null>(null);
 
-  // Add state for user offers
-  const [userOffers, setUserOffers] = useState<UserOffer[]>([]);
-  const [userOffersLoading, setUserOffersLoading] = useState(false);
-  const [userOffersError, setUserOffersError] = useState<string | null>(null);
-
   // Fetch offers from Supabase
   useEffect(() => {
     const fetchOffers = async () => {
@@ -485,53 +462,6 @@ const AdminDashboard: React.FC = () => {
     };
     fetchOffers();
   }, [offerStatus]); // refetch on offer create/delete
-
-  // Fetch user offers from Supabase
-  useEffect(() => {
-    const fetchUserOffers = async () => {
-      console.log('Attempting to fetch user offers...'); // Log to confirm function call
-      if (activeTab !== 'user_offers') {
-        console.log('Not on user_offers tab, skipping fetch.');
-        return;
-      }
-
-      setUserOffersLoading(true);
-      setUserOffersError(null);
-
-      // Fetch offers and join with product data to display product title and image
-      const { data, error } = await supabase
-        .from('offers')
-        .select(`
-          id,
-          created_at,
-          session_id,
-          product_id,
-          offer_amount,
-          offer_message,
-          offerer_name,
-          offerer_contact,
-          status,
-          products ( title, images, price, subject )
-        `)
-        .order('created_at', { ascending: false });
-
-      console.log('Raw Supabase data fetched for user offers:', data);
-
-      if (error) {
-        console.error('Error fetching user offers:', error);
-        setUserOffersError('Failed to load user offers');
-        setUserOffers([]);
-      } else {
-        console.log('Fetched user offers:', data);
-        setUserOffers(data || []);
-        console.log('User offers state updated:', data || []);
-      }
-
-      setUserOffersLoading(false);
-    };
-
-    fetchUserOffers();
-  }, [activeTab]); // Refetch when the active tab changes to user_offers
 
   // Delete offer handler
   const handleDeleteOffer = async (id: string) => {
@@ -613,51 +543,30 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleUpdateOfferStatus = async (offerId: string, status: 'approved' | 'declined') => {
-    setUserOffersLoading(true); // Indicate loading while updating status
-    const { error } = await supabase
-      .from('offers')
-      .update({ status: status })
-      .eq('id', offerId);
-
-    setUserOffersLoading(false); // Stop loading
-
-    if (error) {
-      console.error(`Error updating offer status to ${status}:`, error);
-      addNotification(`Failed to ${status} offer: ${error.message}`, 'error', true);
-      setUserOffersError(`Failed to update offer status: ${error.message}`); // Set error state for user offers
-    } else {
-      console.log(`Offer ${offerId} status updated to ${status}`);
-      addNotification(`Offer ${status} successfully!`, 'success', true);
-      // Update the local state to reflect the status change immediately
-      setUserOffers(prevOffers =>
-        prevOffers.map(offer =>
-          offer.id === offerId ? { ...offer, status: status } : offer
-        )
-      );
-      setUserOffersError(null); // Clear any previous error
-    }
+    // This function is no longer needed as user offers are being removed
+    console.log(`Attempted to update status for offer ${offerId} to ${status}. User offers functionality is removed.`);
   };
 
   // Add state for editing submissions
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [editSubmissionForm, setEditSubmissionForm] = useState<EditSubmissionForm>({
     id: '',
-    item_title: '',
+    title: '',
     description: '',
-    asking_price: ''
+    price: '',
   });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
 
-  // Edit logic
+  // Function to open the edit modal and populate the form
   const openEditModal = (submission: any) => {
     setEditingSubmission(submission);
     setEditSubmissionForm({
-      id: submission.id || '',
-      item_title: submission.item_title || '',
-      description: submission.description || '',
-      asking_price: submission.asking_price || ''
+      id: submission.id,
+      title: submission.title,
+      description: submission.description,
+      price: submission.price.toString(),
     });
     setEditModalOpen(true);
     setEditError('');
@@ -667,29 +576,39 @@ const AdminDashboard: React.FC = () => {
     setEditingSubmission(null);
     setEditSubmissionForm({
       id: '',
-      item_title: '',
+      title: '',
       description: '',
-      asking_price: ''
+      price: '',
     });
     setEditError('');
   };
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
-    setEditSubmissionForm((prev) => ({ ...prev, [name]: value }));
+    setEditSubmissionForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
   const handleUpdateSubmission = async (e) => {
     e.preventDefault();
     setEditLoading(true);
     setEditError('');
-    const { id, ...updateFields } = editSubmissionForm;
-    const { error } = await supabase.from('antique_submissions').update(updateFields).eq('id', id);
-    setEditLoading(false);
-    if (error) {
-      setEditError('Failed to update submission: ' + error.message);
-    } else {
-      setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updateFields } : s)));
-      addNotification('Submission updated successfully!', 'success', true);
-      closeEditModal();
+    if (!editingSubmission) return;
+
+    const updatedSubmission = {
+      ...editingSubmission,
+      title: editSubmissionForm.title,
+      description: editSubmissionForm.description,
+      price: parseFloat(editSubmissionForm.price),
+    };
+
+    try {
+      // Call the context function to update the submission
+      await updateSubmission(updatedSubmission);
+      closeEditModal(); // Close modal on success
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      // Error handling is already in the context, maybe add a local state for form error
     }
   };
 
@@ -824,51 +743,9 @@ const AdminDashboard: React.FC = () => {
 
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => setActiveTab('products')}
-            className={`px-6 py-2 rounded-md transition-colors ${
-              activeTab === 'products'
-                ? 'bg-[#46392d] text-[#F5F1EA]'
-                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
-            }`}
-          >
-            Products
-          </button>
-          <button
-            onClick={() => setActiveTab('submissions')}
-            className={`px-6 py-2 rounded-md transition-colors flex items-center ${
-              activeTab === 'submissions'
-                ? 'bg-[#46392d] text-[#F5F1EA]'
-                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
-            }`}
-          >
-            Submissions
-            {submissions.filter(s => s.status === 'pending').length > 0 && (
-              <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-sm rounded-full">
-                {submissions.filter(s => s.status === 'pending').length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('newsletters')}
-            className={`px-6 py-2 rounded-md transition-colors ${
-              activeTab === 'newsletters'
-                ? 'bg-[#46392d] text-[#F5F1EA]'
-                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
-            }`}
-          >
-            Offers and Discount
-          </button>
-          <button
-            onClick={() => setActiveTab('user_offers')}
-            className={`px-6 py-2 rounded-md transition-colors ${
-              activeTab === 'user_offers'
-                ? 'bg-[#46392d] text-[#F5F1EA]'
-                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
-            }`}
-          >
-            User Offers
-          </button>
+          <Button onClick={() => setActiveTab('products')} className={activeTab === 'products' ? 'bg-[#46392d]/80 text-white' : 'bg-white text-[#46392d]/80'}>Products</Button>
+          <Button onClick={() => setActiveTab('submissions')} className={activeTab === 'submissions' ? 'bg-[#46392d]/80 text-white' : 'bg-white text-[#46392d]/80'}>Submissions</Button>
+          <Button onClick={() => setActiveTab('newsletter_offers')} className={activeTab === 'newsletter_offers' ? 'bg-[#46392d]/80 text-white' : 'bg-white text-[#46392d]/80'}>Offers and Discount</Button>
         </div>
 
         {/* Image Modal */}
@@ -1308,11 +1185,11 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Error message if fetch failed */}
-            {submissionsError && (
+            {/* submissionsError && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 {submissionsError}
               </div>
-            )}
+            )} */}
 
             {/* Submissions Grid */}
             <div className="grid gap-6">
@@ -1326,7 +1203,7 @@ const AdminDashboard: React.FC = () => {
                     {Array.isArray(submission.images) && submission.images.length > 0 ? (
                         <img
                         src={submission.images[0]}
-                        alt={submission.item_title}
+                        alt={submission.title}
                         className="w-full h-full object-cover cursor-pointer rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
                           onClick={() => {
                             setModalImages(submission.images);
@@ -1343,11 +1220,11 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex-1 flex flex-col justify-between p-4 md:p-5">
                       <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">{submission.item_title}</h3>
+                        <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">{submission.title}</h3>
                         <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Submission</span>
                         </div>
                       <p className="text-xs text-[#46392d]/70 mb-1 truncate max-w-[220px]">{submission.description}</p>
-                      <p className="text-base text-[#46392d] font-semibold mb-1">₹{submission.asking_price}</p>
+                      <p className="text-base text-[#46392d] font-semibold mb-1">₹{submission.price}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Name: {submission.name}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Phone: {submission.phone_country_code} {submission.phone_number}</p>
                       <p className="text-xs text-[#46392d]/70 mb-0.5">Address: {submission.address}</p>
@@ -1376,7 +1253,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               ))}
-              {filteredAndSortedSubmissions.length === 0 && !submissionsError && (
+              {filteredAndSortedSubmissions.length === 0 && !/* submissionsError */ && (
                 <div className="text-center py-12 text-[#46392d]/70">
                   No submissions to review at this time.
                 </div>
@@ -1385,7 +1262,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'newsletters' && (
+        {activeTab === 'newsletter_offers' && (
           <div className="space-y-8">
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 max-w-2xl mx-auto">
               <h3 className="text-xl font-serif text-[#46392d] mb-4">Create Offer and Discount</h3>
@@ -1499,91 +1376,6 @@ const AdminDashboard: React.FC = () => {
             )}
           </div>
         )}
-
-        {/* User Offers Section */}
-        {activeTab === 'user_offers' && (
-          <div className="mt-8">
-            <h2 className="text-3xl font-serif text-[#46392d] mb-6">User Offers</h2>
-
-            {userOffersLoading && (
-              <div className="text-center text-[#46392d]/60 py-8">Loading user offers...</div>
-            )}
-
-            {userOffersError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {userOffersError}
-              </div>
-            )}
-
-            {!userOffersLoading && !userOffersError && userOffers.length === 0 && (
-              <div className="text-center text-[#46392d]/70 py-8">
-                No user offers to display.
-              </div>
-            )}
-
-            <div className="grid gap-6">
-              {userOffers.map(offer => (
-                <div key={offer.id} className="bg-white rounded-xl shadow border border-[#e2d6c2] max-w-md mx-auto flex flex-col md:flex-row md:max-w-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  {/* Product Image */}
-                  <div className="relative w-full md:w-48 h-40 md:h-auto flex-shrink-0 bg-[#46392d]/5">
-                    {/* Check if product and images exist and are not empty */}
-                    {offer.products && offer.products.length > 0 && offer.products[0].images && Array.isArray(offer.products[0].images) && offer.products[0].images.length > 0 ? (
-                      <img
-                        src={offer.products[0].images[0]}
-                        alt={offer.products[0].title || 'Product Image'}
-                        className="w-full h-full object-cover rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#46392d]/40 text-sm">
-                        No product image
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 flex flex-col justify-between p-4 md:p-5">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">
-                          Offer for: <span className="font-bold">{offer.products?.[0]?.title || 'Unknown Product'}</span>
-                        </h3>
-                      </div>
-                      <p className="text-sm text-[#46392d]/70 mb-1">Product Price: ₹{offer.products?.[0]?.price?.toLocaleString('en-IN') || 'N/A'}</p>
-                      <p className="text-base text-[#46392d] font-semibold mb-2">Offer Amount: ₹{offer.offer_amount}</p>
-
-                      <p className="text-sm text-[#46392d]/70 mb-1">From: {offer.offerer_name}</p>
-                      <p className="text-sm text-[#46392d]/70 mb-1">Contact: {offer.offerer_contact}</p>
-                      {offer.offer_message && (
-                        <p className="text-sm text-[#46392d]/70 mb-2">Message: {offer.offer_message}</p>
-                      )}
-
-                      <p className="text-xs text-[#46392d]/40">Submitted: {new Date(offer.created_at).toLocaleDateString()}</p>
-                      <p className={`text-sm font-semibold mt-1 ${offer.status === 'approved' ? 'text-green-600' : offer.status === 'declined' ? 'text-red-600' : 'text-amber-600'}`}>
-                        Status: {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
-                      </p>
-                    </div>
-
-                    {offer.status === 'pending' && (
-                      <div className="flex items-center gap-2 justify-end mt-2">
-                        <button
-                          onClick={() => handleUpdateOfferStatus(offer.id, 'approved')}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleUpdateOfferStatus(offer.id, 'declined')}
-                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Edit Submission Modal */}
@@ -1599,8 +1391,8 @@ const AdminDashboard: React.FC = () => {
                   <label className="block text-sm font-medium text-[#46392d] mb-1">Title</label>
                   <input
                     type="text"
-                    name="item_title"
-                    value={editSubmissionForm.item_title || ''}
+                    name="title"
+                    value={editSubmissionForm.title || ''}
                     onChange={handleEditFormChange}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   />
@@ -1615,11 +1407,11 @@ const AdminDashboard: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#46392d] mb-1">Asking Price</label>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Price</label>
                   <input
                     type="number"
-                    name="asking_price"
-                    value={editSubmissionForm.asking_price || ''}
+                    name="price"
+                    value={editSubmissionForm.price || ''}
                     onChange={handleEditFormChange}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   />

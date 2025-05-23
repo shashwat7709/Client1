@@ -44,7 +44,6 @@ interface ProductContextType {
   deleteSubmission: (submissionId: string) => Promise<void>;
   isLoading: boolean;
   loadError: string | null;
-  addOffer: (offer: { productId: string; amount: number; message: string; name: string; contactNumber: string }) => Promise<void>;
 }
 
 const categories = [
@@ -257,40 +256,6 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const addOffer = async (offer: { productId: string; amount: number; message: string; name: string; contactNumber: string }) => {
-    try {
-      const sessionId = localStorage.getItem('cartSessionId'); // Assuming session ID is stored here
-      if (!sessionId) {
-        console.error('Session ID not found. Cannot submit offer.');
-        addNotification('Failed to submit offer: Session not found', 'error');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('offers')
-        .insert([
-          {
-            session_id: sessionId,
-            product_id: offer.productId,
-            offer_amount: offer.amount,
-            offer_message: offer.message,
-            offerer_name: offer.name,
-            offerer_contact: offer.contactNumber,
-          },
-        ]);
-
-      if (error) throw error;
-
-      console.log('Offer submitted successfully:', offer);
-      // Optionally, you might want to fetch and update a list of offers for the user
-      // but for now, we'll just confirm submission.
-    } catch (error) {
-      console.error('Error submitting offer:', error);
-      addNotification('Failed to submit offer', 'error');
-      throw error; // Re-throw to handle in the component
-    }
-  };
-
   const value = {
     products,
     setProducts,
@@ -304,7 +269,6 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     deleteSubmission,
     isLoading,
     loadError,
-    addOffer,
   };
 
   return (
