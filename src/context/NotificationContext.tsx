@@ -55,7 +55,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Save notifications to localStorage whenever they change
   useEffect(() => {
     try {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+      // Filter out error notifications before saving to local storage
+      const notificationsToSave = notifications.filter(n => n.type !== 'error');
+      localStorage.setItem('notifications', JSON.stringify(notificationsToSave));
     } catch (error) {
       console.error('Error saving notifications:', error);
     }

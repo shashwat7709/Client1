@@ -14,6 +14,19 @@ interface Offer {
   created_at: string;
 }
 
+interface UserOffer {
+  id: string;
+  created_at: string;
+  product_id: string;
+  name: string;
+  contact_number: string;
+  email: string;
+  offer_amount: number;
+  product_price: number;
+  message: string;
+  image: string;
+}
+
 interface EditSubmissionForm {
   id: string;
   item_title: string;
@@ -22,6 +35,7 @@ interface EditSubmissionForm {
 }
 
 const AdminDashboard: React.FC = () => {
+  console.log('AdminDashboard component rendering...');
   const navigate = useNavigate();
   const { 
     products, 
@@ -46,7 +60,7 @@ const AdminDashboard: React.FC = () => {
   }, [products, categories, refreshKey]);
 
   const { addNotification } = useNotifications();
-  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters' | 'userOffers'>('products');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -82,6 +96,39 @@ const AdminDashboard: React.FC = () => {
     };
   }, []);
 
+  // User Offers state from Supabase
+  const [userOffers, setUserOffers] = useState<UserOffer[]>([]);
+  const [userOffersLoading, setUserOffersLoading] = useState(false);
+  const [userOffersError, setUserOffersError] = useState<string | null>(null);
+
+  // Fetch user offers
+  useEffect(() => {
+    const fetchUserOffers = async () => {
+      setUserOffersLoading(true);
+      setUserOffersError(null);
+      console.log('Attempting to fetch user offers...');
+      console.log('Current activeTab in fetch effect:', activeTab);
+      const { data, error } = await supabase
+        .from('user_offer')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user offers:', error);
+        setUserOffersError('Failed to load user offers');
+        setUserOffers([]);
+      } else {
+        console.log('Fetched user offers data:', data);
+        setUserOffers(data || []);
+      }
+      setUserOffersLoading(false);
+    };
+
+    if (activeTab === 'userOffers') {
+      fetchUserOffers();
+    }
+  }, [activeTab]);
+
   // Submissions state from Supabase
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
@@ -114,12 +161,12 @@ const AdminDashboard: React.FC = () => {
   // Consolidated filteredAndSortedSubmissions with useMemo
   const filteredAndSortedSubmissions = useMemo(() => {
     let filtered = [...submissions];
-    // Apply category filter (if you want to filter by item_title or another field, adjust here)
-    if (selectedSubmissionCategory !== 'all') {
-      filtered = filtered.filter(sub => 
-        (sub.item_title || '').toLowerCase().includes(selectedSubmissionCategory.toLowerCase())
-      );
-    }
+    // Remove Apply category filter (if you want to filter by item_title or another field, adjust here)
+    // if (selectedSubmissionCategory !== 'all') {
+    //   filtered = filtered.filter(sub => 
+    //     (sub.item_title || '').toLowerCase().includes(selectedSubmissionCategory.toLowerCase())
+    //   );
+    // }
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -760,6 +807,19 @@ const AdminDashboard: React.FC = () => {
           >
             Offers
           </button>
+          <button
+            className={`px-6 py-2 rounded-md transition-colors ${
+              activeTab === 'userOffers'
+                ? 'bg-[#46392d] text-[#F5F1EA]'
+                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
+            }`}
+            onClick={() => {
+              setActiveTab('userOffers');
+              console.log('Active tab set to:', 'userOffers');
+            }}
+          >
+            User Offers
+          </button>
         </div>
 
         {/* Image Modal */}
@@ -785,7 +845,6 @@ const AdminDashboard: React.FC = () => {
                     setModalImageIndex((prev) => prev === 0 ? modalImages.length - 1 : prev - 1);
                     setSelectedImage(modalImages[modalImageIndex === 0 ? modalImages.length - 1 : modalImageIndex - 1]);
                   }}
-                  style={{ zIndex: 21 }}
                 >&#8592;</button>
               )}
               {/* Right arrow */}
@@ -796,7 +855,6 @@ const AdminDashboard: React.FC = () => {
                     setModalImageIndex((prev) => prev === modalImages.length - 1 ? 0 : prev + 1);
                     setSelectedImage(modalImages[modalImageIndex === modalImages.length - 1 ? 0 : modalImageIndex + 1]);
                   }}
-                  style={{ zIndex: 21 }}
                 >&#8594;</button>
               )}
               {/* Dots */}
@@ -1043,7 +1101,9 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredProducts.map((product) => {
+                  {filteredProducts
+                    .filter(product => product !== null && product !== undefined)
+                    .map((product) => {
                     const currentIndex = cardImageIndices[product.id] || 0;
                     const images = product.images || [];
                     return (
@@ -1180,38 +1240,6 @@ const AdminDashboard: React.FC = () => {
           <>
             {/* Add this before the submissions grid */}
             <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedSubmissionCategory('all')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'all'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setSelectedSubmissionCategory('antique')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'antique'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  Antiques
-                </button>
-                <button
-                  onClick={() => setSelectedSubmissionCategory('general')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'general'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  General
-                </button>
-              </div>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-[#46392d]">Sort by:</label>
                 <select
@@ -1413,6 +1441,40 @@ const AdminDashboard: React.FC = () => {
                         onClick={() => handleDeleteOffer(offer.id)}
                       >Delete</button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* New section for User Offers */}
+        {activeTab === 'userOffers' && (
+          <div>
+            <h2 className="text-2xl font-serif text-[#46392d] mb-4">User Offers</h2>
+            {userOffersLoading && <p>Loading user offers...</p>}
+            {userOffersError && <p className="text-red-500">{userOffersError}</p>}
+            {!userOffersLoading && !userOffersError && userOffers.length === 0 && (
+              <p>No user offers found.</p>
+            )}
+            {!userOffersLoading && !userOffersError && userOffers.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userOffers.map((offer) => (
+                  <div key={offer.id} className="bg-white p-4 rounded-lg shadow">
+                    <h3 className="text-xl font-serif text-[#46392d]">Offer Details</h3>
+                    {offer.image && (
+                      <div className="mb-4">
+                        <img src={offer.image} alt="Product" className="w-full h-48 object-cover rounded-md" />
+                      </div>
+                    )}
+                    <p><strong>Name:</strong> {offer.name}</p>
+                    <p><strong>Contact Number:</strong> {offer.contact_number}</p>
+                    <p><strong>Email:</strong> {offer.email}</p>
+                    <p><strong>Offer Amount:</strong> ₹{offer.offer_amount}</p>
+                    <p><strong>Product Price:</strong> ₹{offer.product_price}</p>
+                    <p><strong>Message:</strong> {offer.message}</p>
+                    <p className="text-sm text-gray-500">Submitted on: {new Date(offer.created_at).toLocaleString()}</p>
+                    {/* Add more offer details as needed */}
                   </div>
                 ))}
               </div>

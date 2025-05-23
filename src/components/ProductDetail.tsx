@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
+import { useCart } from '../context/CartContext';
+import { useNotifications } from '../context/NotificationContext';
 import { FaArrowLeft, FaChevronLeft, FaChevronRight, FaRegClock, FaShippingFast, FaRegCheckCircle } from 'react-icons/fa';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { products } = useProducts();
+  const { addToCart } = useCart();
+  const { addNotification } = useNotifications();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState<'description' | 'details' | 'shipping'>('description');
 
@@ -213,10 +217,26 @@ const ProductDetail: React.FC = () => {
                 <button className="flex-1 bg-[#46392d] text-white px-8 py-3 rounded-lg hover:bg-[#5c4b3d] transition-colors text-lg font-medium">
                   Buy Now
                 </button>
-                <button className="flex-1 bg-[#F5F1EA] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium">
+                <button
+                  onClick={() => {
+                    if (product) {
+                      addToCart({
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'
+                      });
+                      addNotification(`${product.title} added to cart!`, 'success', false);
+                    }
+                  }}
+                  className="flex-1 bg-[#F5F1EA] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium"
+                >
                   Add to Cart
                 </button>
-                <button className="w-full bg-white border-2 border-[#46392d] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium">
+                <button
+                  onClick={() => navigate('/sell-item')}
+                  className="w-full bg-white border-2 border-[#46392d] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium"
+                >
                   Make an Offer
                 </button>
               </div>

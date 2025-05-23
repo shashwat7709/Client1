@@ -18,10 +18,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentStep, setPaymentStep] = useState<'details' | 'processing' | 'complete'>('details');
   const [paymentMethod, setPaymentMethod] = useState<'qr' | 'cod'>('qr');
 
+  // Add state for new fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [address, setAddress] = useState('');
+  const [formError, setFormError] = useState('');
+
   // Demo QR code URL (in a real app, this would be generated dynamically)
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=demo-payment-${productTitle}-${price}`;
 
   const handleQRPayment = () => {
+    // Validate fields
+    if (!name.trim() || !email.trim() || !contactNumber.trim() || !address.trim()) {
+      setFormError('Please fill in all contact and delivery details.');
+      return;
+    }
+    setFormError(''); // Clear previous errors
+
     setPaymentStep('processing');
     // Simulate QR code payment processing
     setTimeout(() => {
@@ -34,6 +48,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handleCODPayment = () => {
+    // Validate fields
+    if (!name.trim() || !email.trim() || !contactNumber.trim() || !address.trim()) {
+      setFormError('Please fill in all contact and delivery details.');
+      return;
+    }
+    setFormError(''); // Clear previous errors
+
     setPaymentStep('complete');
     setTimeout(() => {
       onPaymentComplete();
@@ -45,7 +66,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+      <div className="bg-white rounded-xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4 shadow-2xl">
         {paymentStep === 'details' && (
           <>
             <div className="flex justify-between items-center mb-8">
@@ -60,6 +81,65 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="mb-8 p-4 bg-gray-50 rounded-lg">
               <h3 className="text-xl font-medium text-[#46392d] mb-2">{productTitle}</h3>
               <p className="text-3xl font-bold text-[#46392d]">₹{price.toFixed(2)}</p>
+            </div>
+
+            {/* Add Form Error Display */}
+            {formError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {formError}
+              </div>
+            )}
+
+            {/* Add New Input Fields */}
+            <div className="space-y-4 mb-8">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-[#46392d] mb-1">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  placeholder="Enter your name"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-[#46392d] mb-1">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label htmlFor="contactNumber" className="block text-sm font-medium text-[#46392d] mb-1">Contact Number</label>
+                <input
+                  type="tel"
+                  id="contactNumber"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  placeholder="Enter your contact number"
+                />
+              </div>
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-[#46392d] mb-1">Delivery Address</label>
+                <textarea
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                  rows={3}
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  placeholder="Enter your delivery address"
+                />
+              </div>
             </div>
 
             <div className="space-y-8">

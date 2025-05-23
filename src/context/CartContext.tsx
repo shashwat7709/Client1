@@ -37,21 +37,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to fetch cart items from Supabase
   const fetchCartItems = async () => {
+    console.log('Fetching cart items from Supabase for session:', sessionId); // Log fetch initiation
     const { data, error } = await supabase
       .from('cart_items')
-      .select('product_id, quantity')
+      .select<string, { product_id: string; quantity: number }>( 'product_id, quantity')
       .eq('session_id', sessionId);
 
     if (error) {
       console.error('Error fetching cart items:', error);
       // Optionally add a user-facing notification here
+      setCart([]); // Clear cart on fetch error to avoid displaying stale data
       return;
     }
+
+    console.log('Successfully fetched cart items raw data:', data); // Log fetched data
 
     // We need to join with product data to get title, price, and image
     // For now, let's just set the state with product_id and quantity
     // A more robust solution would fetch product details or store them in the cart_items table
-    const productIds = data.map(item => item.product_id);
+    const productIds = data?.map(item => item.product_id) || [];
+    if (productIds.length === 0) {
+        console.log('No cart items with product_ids found, setting cart to empty.');
+        setCart([]);
+        return;
+    }
+
+    console.log('Fetching product details for product IDs:', productIds); // Log product ID fetch initiation
+
     const { data: productData, error: productError } = await supabase
       .from('products') // Assuming you have a 'products' table
       .select('id, title, price, images')
@@ -63,8 +75,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const mergedCart: CartItem[] = data.map(cartItem => {
-      const product = productData.find(p => p.id === cartItem.product_id);
+    console.log('Successfully fetched product data:', productData); // Log fetched product data
+
+    const mergedCart: CartItem[] = (data || []).map(cartItem => {
+      console.log('Mapping cart item:', cartItem); // Log each item being mapped
+      const product = (productData || []).find(p => p.id === cartItem.product_id);
       return {
         id: cartItem.product_id,
         title: product?.title || 'Unknown Product',
@@ -73,6 +88,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         quantity: cartItem.quantity,
       };
     });
+
+    console.log('Merged cart data before setting state:', mergedCart); // Log the merged cart data
 
     setCart(mergedCart);
   };
@@ -83,6 +100,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const addToCart = async (item: { id: string; title: string; price: number; image: string }) => {
+    console.log('Attempting to add item to cart:', item.title); // Log add initiation
     const { data, error } = await supabase
       .from('cart_items')
       .select('quantity')
@@ -99,6 +117,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data) {
       // Item exists, update quantity
       const newQuantity = data.quantity + 1;
+      console.log(`Item ${item.title} already in cart, attempting to update quantity to ${newQuantity}`); // Log update intent
       const { error: updateError } = await supabase
         .from('cart_items')
         .update({ quantity: newQuantity })
@@ -110,8 +129,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Optionally add a user-facing notification here
         return;
       }
+      console.log(`Successfully updated quantity for ${item.title}`); // Log successful update
     } else {
       // Item does not exist, insert new row
+      console.log(`Item ${item.title} not in cart, attempting to insert`); // Log insert intent
       const { error: insertError } = await supabase
         .from('cart_items')
         .insert({
@@ -126,13 +147,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Optionally add a user-facing notification here
         return;
       }
+      console.log(`Successfully inserted ${item.title} into cart`); // Log successful insert
     }
 
     // After adding/updating, re-fetch the cart to update the UI
+    console.log('Refetching cart items after add/update...'); // Log refetch trigger
     fetchCartItems();
   };
 
   const removeFromCart = async (id: string) => {
+    console.log('Attempting to remove item from cart with id:', id); // Log remove initiation
     const { error } = await supabase
       .from('cart_items')
       .delete()
@@ -145,38 +169,84 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    console.log(`Successfully removed item with id: ${id}`); // Log successful removal
+
     // After removing, re-fetch the cart to update the UI
+    console.log('Refetching cart items after removal...'); // Log refetch trigger
     fetchCartItems();
   };
 
   const updateQuantity = async (id: string, quantity: number) => {
+    console.log(`Attempting to update quantity for item ${id} to ${quantity}`); // Log update initiation
+
+    // Optimistically update the UI
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.id === id ? { ...item, quantity: quantity } : item
+      )
+    );
+
     if (quantity < 1) {
       // If quantity is less than 1, remove the item
+      console.log(`Quantity is less than 1 (${quantity}), removing item ${id}`); // Log removal due to quantity
       await removeFromCart(id);
       return;
     }
 
-    const { error } = await supabase
+    // First, fetch the current quantity to ensure the item exists and get the current quantity
+    const { data: currentItemData, error: fetchError } = await supabase
+      .from('cart_items')
+      .select('product_id, quantity')
+      .eq('session_id', sessionId)
+      .eq('product_id', id)
+      .single();
+
+    console.log("Supabase fetch response in updateQuantity:", { currentItemData, fetchError }); // Log the Supabase response
+
+    if (fetchError) {
+      console.error('Error fetching item for quantity update:', fetchError);
+      // Optionally add a user-facing notification here
+      return;
+    }
+
+    if (!currentItemData) {
+      console.warn(`Item with id ${id} not found in cart for quantity update.`);
+      // Item not found, maybe it was removed concurrently? Or a logic error elsewhere.
+      // Depending on desired behavior, might add it here or just stop.
+      // For now, we'll stop.
+      return;
+    }
+
+    // Now, update the quantity
+    const { data: updateData, error: updateError } = await supabase
       .from('cart_items')
       .update({ quantity })
       .eq('session_id', sessionId)
       .eq('product_id', id);
 
-    if (error) {
-      console.error('Error updating item quantity in cart:', error);
+    console.log("Supabase update response:", { updateData, updateError }); // Log the Supabase response
+
+    if (updateError) {
+      console.error('Error updating item quantity in cart:', updateError);
       // Optionally add a user-facing notification here
       return;
     }
 
+    console.log(`Successfully updated quantity for item ${id} to ${quantity}`); // Log successful update
+
     // After updating, re-fetch the cart to update the UI
+    console.log('Refetching cart items after quantity update...'); // Log refetch trigger
     fetchCartItems();
   };
 
   const clearCart = async () => {
+    console.log('Attempting to clear cart for session ID:', sessionId); // Log the session ID
     const { error } = await supabase
       .from('cart_items')
       .delete()
       .eq('session_id', sessionId);
+
+    console.log("Supabase delete response in clearCart:", { error }); // Log the Supabase response
 
     if (error) {
       console.error('Error clearing cart:', error);
