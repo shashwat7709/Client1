@@ -37,6 +37,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to fetch cart items from Supabase
   const fetchCartItems = async () => {
+    console.log('Fetching cart items...');
     const { data, error } = await supabase
       .from('cart_items')
       .select('product_id, quantity')
@@ -74,6 +75,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     });
 
+    console.log('Fetched and merged cart data:', mergedCart);
     setCart(mergedCart);
   };
 
@@ -150,6 +152,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateQuantity = async (id: string, quantity: number) => {
+    console.log(`Attempting to update quantity for item ${id} to ${quantity}`);
     if (quantity < 1) {
       // If quantity is less than 1, remove the item
       await removeFromCart(id);
@@ -161,6 +164,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .update({ quantity })
       .eq('session_id', sessionId)
       .eq('product_id', id);
+
+    if (error) {
+      console.error('Supabase updateQuantity error:', error);
+    } else {
+      console.log('Supabase updateQuantity successful');
+    }
 
     if (error) {
       console.error('Error updating item quantity in cart:', error);

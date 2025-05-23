@@ -41,6 +41,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
                   <div className="flex-1">
                     <h3 className="font-medium text-[#46392d]">{item.title}</h3>
                     <p className="text-[#46392d] font-bold">₹{item.price.toFixed(2)}</p>
+                    console.log(`Rendering item ${item.id} with quantity: ${item.quantity}`);
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -76,7 +77,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-[#46392d]">Total:</span>
               <span className="text-2xl font-bold text-[#46392d]">
-                ${getCartTotal().toFixed(2)}
+                ₹{getCartTotal().toFixed(2)}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4">
