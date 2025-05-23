@@ -37,7 +37,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to fetch cart items from Supabase
   const fetchCartItems = async () => {
-    console.log('Fetching cart items from Supabase for session:', sessionId); // Log fetch initiation
+    console.log('Attempting to fetch cart items from Supabase for session:', sessionId);
     const { data, error } = await supabase
       .from('cart_items')
       .select<string, { product_id: string; quantity: number }>( 'product_id, quantity')
@@ -89,8 +89,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     });
 
-    console.log('Merged cart data before setting state:', mergedCart); // Log the merged cart data
-
+    console.log('Merged cart data before setting state:', mergedCart);
     setCart(mergedCart);
   };
 
@@ -177,7 +176,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateQuantity = async (id: string, quantity: number) => {
-    console.log(`Attempting to update quantity for item ${id} to ${quantity}`); // Log update initiation
+    console.log(`Attempting to update quantity for item ${id} to ${quantity}`);
 
     // Optimistically update the UI
     setCart(prevCart =>
@@ -188,7 +187,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (quantity < 1) {
       // If quantity is less than 1, remove the item
-      console.log(`Quantity is less than 1 (${quantity}), removing item ${id}`); // Log removal due to quantity
+      console.log(`Quantity is less than 1 (${quantity}), removing item ${id}`);
       await removeFromCart(id);
       return;
     }
@@ -201,7 +200,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('product_id', id)
       .single();
 
-    console.log("Supabase fetch response in updateQuantity:", { currentItemData, fetchError }); // Log the Supabase response
+    console.log("Supabase fetch response in updateQuantity:", { currentItemData, fetchError });
 
     if (fetchError) {
       console.error('Error fetching item for quantity update:', fetchError);
@@ -224,7 +223,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('session_id', sessionId)
       .eq('product_id', id);
 
-    console.log("Supabase update response:", { updateData, updateError }); // Log the Supabase response
+    console.log("Supabase update response:", { updateData, updateError });
 
     if (updateError) {
       console.error('Error updating item quantity in cart:', updateError);
@@ -232,11 +231,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    console.log(`Successfully updated quantity for item ${id} to ${quantity}`); // Log successful update
-
-    // After updating, re-fetch the cart to update the UI
-    console.log('Refetching cart items after quantity update...'); // Log refetch trigger
-    fetchCartItems();
+    // No explicit re-fetch here, relying on optimistic update for immediate feedback
+    // and potential re-fetch on component mount or other triggers if needed for strict consistency.
   };
 
   const clearCart = async () => {
