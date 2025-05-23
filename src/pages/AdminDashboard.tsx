@@ -14,6 +14,26 @@ interface Offer {
   created_at: string;
 }
 
+interface AdminOffer {
+  id: string;
+  images: string[];
+  content: string;
+  created_at: string;
+}
+
+interface UserOffer {
+  id: string;
+  created_at: string;
+  session_id: string;
+  product_id: string;
+  offer_amount: number;
+  offer_message: string | null;
+  offerer_name: string;
+  offerer_contact: string;
+  status: 'pending' | 'approved' | 'declined';
+  product?: { title: string; images: string[]; price: number; subject: string } | null;
+}
+
 interface EditSubmissionForm {
   id: string;
   item_title: string;
@@ -46,7 +66,7 @@ const AdminDashboard: React.FC = () => {
   }, [products, categories, refreshKey]);
 
   const { addNotification } = useNotifications();
-  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'submissions' | 'newsletters' | 'user_offers'>('products');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -440,9 +460,14 @@ const AdminDashboard: React.FC = () => {
   const [offerStatus, setOfferStatus] = useState('');
 
   // Add state for offers
-  const [adminOffers, setAdminOffers] = useState<Offer[]>([]);
+  const [adminOffers, setAdminOffers] = useState<AdminOffer[]>([]); // Renamed newsletter offers to adminOffers to avoid confusion
   const [offersLoading, setOffersLoading] = useState(true);
   const [offerEditIndex, setOfferEditIndex] = useState<number | null>(null);
+
+  // Add state for user offers
+  const [userOffers, setUserOffers] = useState<UserOffer[]>([]);
+  const [userOffersLoading, setUserOffersLoading] = useState(false);
+  const [userOffersError, setUserOffersError] = useState<string | null>(null);
 
   // Fetch offers from Supabase
   useEffect(() => {
@@ -459,6 +484,51 @@ const AdminDashboard: React.FC = () => {
     };
     fetchOffers();
   }, [offerStatus]); // refetch on offer create/delete
+
+  // Fetch user offers from Supabase
+  useEffect(() => {
+    const fetchUserOffers = async () => {
+      console.log('Attempting to fetch user offers...'); // Log to confirm function call
+      if (activeTab !== 'user_offers') {
+        console.log('Not on user_offers tab, skipping fetch.');
+        return;
+      }
+
+      setUserOffersLoading(true);
+      setUserOffersError(null);
+
+      // Fetch offers and join with product data to display product title and image
+      const { data, error } = await supabase
+        .from('offers')
+        .select(`
+          id,
+          created_at,
+          session_id,
+          product_id,
+          offer_amount,
+          offer_message,
+          offerer_name,
+          offerer_contact,
+          status,
+          products ( title, images, price, subject )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user offers:', error);
+        setUserOffersError('Failed to load user offers');
+        setUserOffers([]);
+      } else {
+        console.log('Fetched user offers:', data);
+        setUserOffers(data || []);
+        console.log('User offers state updated:', data || []);
+      }
+
+      setUserOffersLoading(false);
+    };
+
+    fetchUserOffers();
+  }, [activeTab]); // Refetch when the active tab changes to user_offers
 
   // Delete offer handler
   const handleDeleteOffer = async (id: string) => {
@@ -536,6 +606,32 @@ const AdminDashboard: React.FC = () => {
         setNewsletterContent('');
         if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleUpdateOfferStatus = async (offerId: string, status: 'approved' | 'declined') => {
+    setUserOffersLoading(true); // Indicate loading while updating status
+    const { error } = await supabase
+      .from('offers')
+      .update({ status: status })
+      .eq('id', offerId);
+
+    setUserOffersLoading(false); // Stop loading
+
+    if (error) {
+      console.error(`Error updating offer status to ${status}:`, error);
+      addNotification(`Failed to ${status} offer: ${error.message}`, 'error', true);
+      setUserOffersError(`Failed to update offer status: ${error.message}`); // Set error state for user offers
+    } else {
+      console.log(`Offer ${offerId} status updated to ${status}`);
+      addNotification(`Offer ${status} successfully!`, 'success', true);
+      // Update the local state to reflect the status change immediately
+      setUserOffers(prevOffers =>
+        prevOffers.map(offer =>
+          offer.id === offerId ? { ...offer, status: status } : offer
+        )
+      );
+      setUserOffersError(null); // Clear any previous error
     }
   };
 
@@ -758,7 +854,17 @@ const AdminDashboard: React.FC = () => {
                 : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
             }`}
           >
-            Offers
+            Offers and Discount
+          </button>
+          <button
+            onClick={() => setActiveTab('user_offers')}
+            className={`px-6 py-2 rounded-md transition-colors ${
+              activeTab === 'user_offers'
+                ? 'bg-[#46392d] text-[#F5F1EA]'
+                : 'bg-white text-[#46392d] hover:bg-[#46392d]/10'
+            }`}
+          >
+            User Offers
           </button>
         </div>
 
@@ -1177,42 +1283,13 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'submissions' && (
-          <>
-            {/* Add this before the submissions grid */}
+          <div className="mt-8">
+            <h2 className="text-3xl font-serif text-[#46392d] mb-6">Submissions</h2>
+
+            {/* Filter and Sort Controls */}
             <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedSubmissionCategory('all')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'all'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setSelectedSubmissionCategory('antique')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'antique'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  Antiques
-                </button>
-                <button
-                  onClick={() => setSelectedSubmissionCategory('general')}
-                  className={`px-4 py-2 rounded-md ${
-                    selectedSubmissionCategory === 'general'
-                      ? 'bg-[#46392d] text-white'
-                      : 'bg-white text-[#46392d] border border-[#46392d]'
-                  }`}
-                >
-                  General
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
+              {/* Sort By */}
+              <div className="flex items-center space-x-2">
                 <label className="text-sm text-[#46392d]">Sort by:</label>
                 <select
                   value={sortBy}
@@ -1302,13 +1379,13 @@ const AdminDashboard: React.FC = () => {
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
 
         {activeTab === 'newsletters' && (
           <div className="space-y-8">
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 max-w-2xl mx-auto">
-              <h3 className="text-xl font-serif text-[#46392d] mb-4">Create Offer</h3>
+              <h3 className="text-xl font-serif text-[#46392d] mb-4">Create Offer and Discount</h3>
               {newsletterFormError && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                   {newsletterFormError}
@@ -1417,6 +1494,84 @@ const AdminDashboard: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* User Offers Section */}
+        {activeTab === 'user_offers' && (
+          <div className="mt-8">
+            <h2 className="text-3xl font-serif text-[#46392d] mb-6">User Offers</h2>
+
+            {userOffersLoading && (
+              <div className="text-center text-[#46392d]/60 py-8">Loading user offers...</div>
+            )}
+
+            {userOffersError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {userOffersError}
+              </div>
+            )}
+
+            {!userOffersLoading && !userOffersError && userOffers.length === 0 && (
+              <div className="text-center text-[#46392d]/70 py-8">
+                No user offers to display.
+              </div>
+            )}
+
+            <div className="grid gap-6">
+              {userOffers.map(offer => (
+                <div key={offer.id} className="bg-white rounded-xl shadow border border-[#e2d6c2] max-w-md mx-auto flex flex-col md:flex-row md:max-w-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  {/* Product Image */}
+                  <div className="relative w-full md:w-48 h-40 md:h-auto flex-shrink-0 bg-[#46392d]/5">
+                    {offer.product?.images && offer.product.images.length > 0 ? (
+                      <img
+                        src={offer.product.images[0]}
+                        alt={offer.product.title || 'Product Image'}
+                        className="w-full h-full object-cover rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[#46392d]/40 text-sm">
+                        No product image
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-between p-4 md:p-5">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">
+                          Offer for: {offer.product?.title || 'Unknown Product'}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-[#46392d]/70 mb-1">Offer Amount: ₹{offer.offer_amount}</p>
+                      {offer.offer_message && (
+                        <p className="text-sm text-[#46392d]/70 mb-1">Message: {offer.offer_message}</p>
+                      )}
+                      <p className="text-sm text-[#46392d]/70 mb-1">From: {offer.offerer_name} ({offer.offerer_contact})</p>
+                      <p className="text-xs text-[#46392d]/40">Submitted: {new Date(offer.created_at).toLocaleDateString()}</p>
+                      <p className={`text-sm font-semibold mt-1 ${offer.status === 'approved' ? 'text-green-600' : offer.status === 'declined' ? 'text-red-600' : 'text-amber-600'}`}>Status: {offer.status}</p>
+                    </div>
+
+                    {offer.status === 'pending' && (
+                      <div className="flex items-center gap-2 justify-end mt-2">
+                        <button
+                          onClick={() => handleUpdateOfferStatus(offer.id, 'approved')}
+                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleUpdateOfferStatus(offer.id, 'declined')}
+                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
