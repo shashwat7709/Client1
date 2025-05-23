@@ -268,7 +268,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateSubmission,
     deleteSubmission,
     isLoading,
-    loadError
+    loadError,
   };
 
   return (
