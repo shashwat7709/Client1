@@ -76,7 +76,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-[#46392d]">Total:</span>
               <span className="text-2xl font-bold text-[#46392d]">
-                ${getCartTotal().toFixed(2)}
+                ₹{getCartTotal().toFixed(2)}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4">

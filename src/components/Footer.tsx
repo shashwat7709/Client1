@@ -22,17 +22,26 @@ const Footer = () => {
             <h3 className="font-serif text-xl mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/shop" className="text-text-light/70 hover:text-text-light transition-colors">
+                <Link to="/shop" 
+                      className="text-text-light/70 hover:text-text-light transition-colors"
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
                   Our Collection
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-text-light/70 hover:text-text-light transition-colors">
+                <Link to="/about" 
+                      className="text-text-light/70 hover:text-text-light transition-colors"
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-text-light/70 hover:text-text-light transition-colors">
+                <Link to="/contact" 
+                      className="text-text-light/70 hover:text-text-light transition-colors"
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
                   Contact
                 </Link>
               </li>

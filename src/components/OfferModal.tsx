@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useProducts } from '../context/ProductContext';
 import { useNotifications } from '../context/NotificationContext';
+import { supabase } from '../config/supabase'; // Assuming your Supabase client is exported from here
 
 interface OfferModalProps {
   isOpen: boolean;
@@ -21,10 +22,11 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, product }) => 
   const [message, setMessage] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [contactNumber, setContactNumber] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
 
   if (!isOpen || !product) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const amount = parseFloat(offerAmount);
@@ -43,20 +45,54 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, product }) => 
       return;
     }
 
-    addOffer({
-      productId: product.id,
-      amount,
-      message,
-      name,
-      contactNumber
-    });
+    if (!email.trim()) {
+      addNotification('Please enter your email', 'error', false);
+      return;
+    }
 
+    // Basic email format validation
+    const emailRegex = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+    if (!emailRegex.test(email)) {
+      addNotification('Please enter a valid email address', 'error', false);
+      return;
+    }
+
+    if (!product) { // Should not happen due to the check at the beginning, but good for type safety
+      addNotification('Product details missing.', 'error', false);
+      return;
+    }
+
+    // Prepare data for Supabase insertion
+    const offerData = {
+      product_id: product.id,
+      name: name,
+      contact_number: contactNumber,
+      email: email,
+      offer_amount: amount,
+      product_price: product.price,
+      message: message,
+      image: product.images && product.images.length > 0 ? product.images[0] : null,
+    };
+
+    // Insert data into Supabase
+    const { data, error } = await supabase
+      .from('user_offer')
+      .insert([offerData]);
+
+    if (error) {
+      console.error('Error submitting offer:', error);
+      addNotification('Failed to submit offer. Please try again.', 'error', false);
+    } else {
     addNotification('Your offer has been submitted successfully!', 'success', false);
+      // Clear form fields after successful submission
     setOfferAmount('');
     setMessage('');
     setName('');
     setContactNumber('');
+      setEmail('');
     onClose();
+    }
+
   };
 
   return (
@@ -118,6 +154,21 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, product }) => 
                   required
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
                   placeholder="Enter your contact number"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-[#46392d] mb-2">
+                  Your Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>
