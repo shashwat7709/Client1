@@ -17,11 +17,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const [paymentStep, setPaymentStep] = useState<'details' | 'processing' | 'complete'>('details');
   const [paymentMethod, setPaymentMethod] = useState<'qr' | 'cod'>('qr');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [formError, setFormError] = useState('');
 
   // Demo QR code URL (in a real app, this would be generated dynamically)
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=demo-payment-${productTitle}-${price}`;
 
   const handleQRPayment = () => {
+    if (!name || !address || !mobile || !email) {
+      setFormError('Please fill in all your details.');
+      return;
+    }
+    setFormError('');
     setPaymentStep('processing');
     // Simulate QR code payment processing
     setTimeout(() => {
@@ -46,6 +56,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+        <div className="max-h-[90vh] overflow-y-auto pr-4">
         {paymentStep === 'details' && (
           <>
             <div className="flex justify-between items-center mb-8">
@@ -89,6 +100,60 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {paymentMethod === 'qr' ? (
                 <div className="flex flex-col items-center space-y-6">
+                    {/* New Details Section */}
+                    <div className="w-full space-y-4">
+                      <h4 className="text-lg font-medium text-[#46392d]">Enter Your Details</h4>
+                      {formError && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+                          {formError}
+                        </div>
+                      )}
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-[#46392d] mb-1">Name</label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                          placeholder="Your Name"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="address" className="block text-sm font-medium text-[#46392d] mb-1">Address</label>
+                        <textarea
+                          id="address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d] h-24"
+                          placeholder="Your Address"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="mobile" className="block text-sm font-medium text-[#46392d] mb-1">Mobile Number</label>
+                        <input
+                          type="tel"
+                          id="mobile"
+                          value={mobile}
+                          onChange={(e) => setMobile(e.target.value)}
+                          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                          placeholder="Your Mobile Number"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-[#46392d] mb-1">Email</label>
+                        <input
+                          type="email"
+                          id="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                          placeholder="Your Email"
+                        />
+                      </div>
+                    </div>
+                    {/* End New Details Section */}
+
                   <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-gray-100">
                     <img
                       src={qrCodeUrl}
@@ -155,6 +220,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
