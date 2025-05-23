@@ -31,7 +31,8 @@ interface UserOffer {
   offerer_name: string;
   offerer_contact: string;
   status: 'pending' | 'approved' | 'declined';
-  product?: { title: string; images: string[]; price: number; subject: string } | null;
+  // Joined product details (will be an array because 'products' is a table name)
+  products: { title: string; images: string[]; price: number; subject: string }[] | null;
 }
 
 interface EditSubmissionForm {
@@ -513,6 +514,8 @@ const AdminDashboard: React.FC = () => {
           products ( title, images, price, subject )
         `)
         .order('created_at', { ascending: false });
+
+      console.log('Raw Supabase data fetched for user offers:', data);
 
       if (error) {
         console.error('Error fetching user offers:', error);
@@ -1523,10 +1526,11 @@ const AdminDashboard: React.FC = () => {
                 <div key={offer.id} className="bg-white rounded-xl shadow border border-[#e2d6c2] max-w-md mx-auto flex flex-col md:flex-row md:max-w-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   {/* Product Image */}
                   <div className="relative w-full md:w-48 h-40 md:h-auto flex-shrink-0 bg-[#46392d]/5">
-                    {offer.product?.images && offer.product.images.length > 0 ? (
+                    {/* Check if product and images exist and are not empty */}
+                    {offer.products && offer.products.length > 0 && offer.products[0].images && Array.isArray(offer.products[0].images) && offer.products[0].images.length > 0 ? (
                       <img
-                        src={offer.product.images[0]}
-                        alt={offer.product.title || 'Product Image'}
+                        src={offer.products[0].images[0]}
+                        alt={offer.products[0].title || 'Product Image'}
                         className="w-full h-full object-cover rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
                       />
                     ) : (
@@ -1540,16 +1544,22 @@ const AdminDashboard: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-serif text-[#46392d] font-medium truncate max-w-[180px]">
-                          Offer for: {offer.product?.title || 'Unknown Product'}
+                          Offer for: <span className="font-bold">{offer.products?.[0]?.title || 'Unknown Product'}</span>
                         </h3>
                       </div>
-                      <p className="text-sm text-[#46392d]/70 mb-1">Offer Amount: ₹{offer.offer_amount}</p>
+                      <p className="text-sm text-[#46392d]/70 mb-1">Product Price: ₹{offer.products?.[0]?.price?.toLocaleString('en-IN') || 'N/A'}</p>
+                      <p className="text-base text-[#46392d] font-semibold mb-2">Offer Amount: ₹{offer.offer_amount}</p>
+
+                      <p className="text-sm text-[#46392d]/70 mb-1">From: {offer.offerer_name}</p>
+                      <p className="text-sm text-[#46392d]/70 mb-1">Contact: {offer.offerer_contact}</p>
                       {offer.offer_message && (
-                        <p className="text-sm text-[#46392d]/70 mb-1">Message: {offer.offer_message}</p>
+                        <p className="text-sm text-[#46392d]/70 mb-2">Message: {offer.offer_message}</p>
                       )}
-                      <p className="text-sm text-[#46392d]/70 mb-1">From: {offer.offerer_name} ({offer.offerer_contact})</p>
+
                       <p className="text-xs text-[#46392d]/40">Submitted: {new Date(offer.created_at).toLocaleDateString()}</p>
-                      <p className={`text-sm font-semibold mt-1 ${offer.status === 'approved' ? 'text-green-600' : offer.status === 'declined' ? 'text-red-600' : 'text-amber-600'}`}>Status: {offer.status}</p>
+                      <p className={`text-sm font-semibold mt-1 ${offer.status === 'approved' ? 'text-green-600' : offer.status === 'declined' ? 'text-red-600' : 'text-amber-600'}`}>
+                        Status: {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
+                      </p>
                     </div>
 
                     {offer.status === 'pending' && (
