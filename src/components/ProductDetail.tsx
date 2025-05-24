@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useNotifications } from '../context/NotificationContext';
 import { FaArrowLeft, FaChevronLeft, FaChevronRight, FaRegClock, FaShippingFast, FaRegCheckCircle } from 'react-icons/fa';
 import PaymentModal from './PaymentModal';
+import OfferModal from './OfferModal';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -15,6 +16,7 @@ const ProductDetail: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState<'description' | 'details' | 'shipping'>('description');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
   const product = products.find(p => p.id === productId);
 
@@ -41,6 +43,10 @@ const ProductDetail: React.FC = () => {
 
   const handleBuyNowClick = () => {
     setIsPaymentModalOpen(true);
+  };
+
+  const handleMakeOfferClick = () => {
+    setIsOfferModalOpen(true);
   };
 
   if (!product) {
@@ -243,7 +249,7 @@ const ProductDetail: React.FC = () => {
                   Add to Cart
                 </button>
                 <button
-                  onClick={() => navigate('/sell-item')}
+                  onClick={handleMakeOfferClick}
                   className="w-full bg-white border-2 border-[#46392d] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium"
                 >
                   Make an Offer
@@ -260,6 +266,21 @@ const ProductDetail: React.FC = () => {
             onClose={() => setIsPaymentModalOpen(false)}
             productTitle={product.title}
             price={product.price}
+            onPaymentComplete={() => {
+              // Add your desired logic here for when payment is complete
+              console.log('Payment completed!');
+              // Example: navigate to a thank you page
+              // navigate('/thank-you');
+            }}
+          />
+        )}
+
+        {/* Render OfferModal */}
+        {product && (
+          <OfferModal
+            isOpen={isOfferModalOpen}
+            onClose={() => setIsOfferModalOpen(false)}
+            product={product}
           />
         )}
       </div>
