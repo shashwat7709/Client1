@@ -25,6 +25,13 @@ const ModalWrapper: React.FC = () => {
         return;
       }
 
+      // Check if user has previously dismissed the modal
+      if (localStorage.getItem('registrationModalDismissed') === 'true') {
+        setShowRegistration(false);
+        setIsCheckingRegistration(false);
+        return;
+      }
+
       try {
         console.log('ModalWrapper: Checking for existing session...'); // Debug log
         const { data: { session } } = await supabase.auth.getSession();
@@ -114,6 +121,11 @@ const ModalWrapper: React.FC = () => {
     setShowRegistration(false);
   };
 
+  const handleClose = () => {
+    localStorage.setItem('registrationModalDismissed', 'true');
+    setShowRegistration(false);
+  };
+
   if (isCheckingRegistration) {
     return null; // Or a loading spinner if you prefer
   }
@@ -124,6 +136,7 @@ const ModalWrapper: React.FC = () => {
         <UserRegistrationModal 
           isOpen={showRegistration} 
           onSubmit={handleRegistration} 
+          onClose={handleClose}
         />
       )}
       <Navbar />

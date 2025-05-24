@@ -4,9 +4,10 @@ import { supabase } from '../config/supabase';
 interface UserRegistrationModalProps {
   isOpen: boolean;
   onSubmit: (name: string, contactNumber: string) => void;
+  onClose: () => void;
 }
 
-const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, onSubmit }) => {
+const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, onSubmit, onClose }) => {
   const [name, setName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState('');
@@ -114,7 +115,16 @@ const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({ isOpen, o
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+          aria-label="Close"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <div className="p-6">
           <h2 className="text-2xl font-serif text-[#46392d] mb-6 text-center">Welcome to The Vintage Cottage</h2>
           <p className="text-[#46392d]/70 mb-6 text-center">
