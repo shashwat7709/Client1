@@ -80,7 +80,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             
             <div className="mb-8 p-4 bg-gray-50 rounded-lg">
               <h3 className="text-xl font-medium text-[#46392d] mb-2">{productTitle}</h3>
-              <p className="text-3xl font-bold text-[#46392d]">₹{price.toFixed(2)}</p>
+              {typeof price === 'number' && !isNaN(price) ? (
+                <p className="text-3xl font-bold text-[#46392d]">₹{price.toFixed(2)}</p>
+              ) : (
+                <p className="text-xl font-bold text-red-500">Price not available</p>
+              )}
             </div>
 
             {/* Add Form Error Display */}
