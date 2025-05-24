@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../config/supabase'; // Assuming your Supabase client is exported from here
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -7,15 +8,34 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simple hardcoded authentication
-    if (email === 'admin@vintagecottage.com' && password === 'admin123') {
-      localStorage.setItem('adminToken', 'admin-token');
-      navigate('/admin/dashboard');
-    } else {
-      setError('Invalid email or password');
+    setError(''); // Clear previous errors
+
+    try {
+      const { data, error } = await supabase.rpc('verify_admin_password', {
+        admin_email: email,
+        plain_password: password,
+      });
+
+      if (error) {
+        console.error('Error calling verify_admin_password:', error);
+        setError('An error occurred during login. Please try again.');
+        return;
+      }
+
+      if (data === true) {
+        // Store a simple indicator that the admin is logged in.
+        // For a real application, you might want a more robust session management.
+        localStorage.setItem('adminLoggedIn', 'true'); 
+        navigate('/admin/dashboard');
+      } else {
+        setError('Invalid email or password');
+      }
+
+    } catch (err) {
+      console.error('Unexpected error during login:', err);
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 
