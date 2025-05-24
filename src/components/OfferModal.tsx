@@ -107,7 +107,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, product }) => 
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto max-h-[80vh]">
           <div className="flex gap-6 mb-6">
             <div className="w-1/3">
               <img
