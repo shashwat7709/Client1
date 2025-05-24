@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -41,7 +41,6 @@ const Shop: React.FC = () => {
   }, [products]);
 
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<null | { id: string; title: string; price: number }>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isCartCheckout, setIsCartCheckout] = useState(false);
@@ -149,10 +148,7 @@ const Shop: React.FC = () => {
           </h1>
           <div className="flex items-center space-x-4">
             <NotificationIcon />
-            <button
-              onClick={() => setShowCart(true)}
-              className="relative bg-[#46392d] text-white px-4 py-2 rounded-md hover:bg-[#5c4b3d] transition-colors"
-            >
+            <Link to="/cart" className="relative text-[#46392d] hover:text-[#5c4b3d] transition-colors flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -161,7 +157,7 @@ const Shop: React.FC = () => {
                   {getItemCount()}
                 </span>
               )}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -265,8 +261,8 @@ const Shop: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                        setSelectedProduct(product);
-                        setShowPaymentModal(true);
+                        handleAddToCart(product);
+                        navigate('/cart');
                       }}
                       className="bg-[#46392d] text-white px-4 py-2 rounded-md hover:bg-[#5c4b3d] transition-colors"
                     >
@@ -293,12 +289,6 @@ const Shop: React.FC = () => {
             </motion.div>
           ))}
         </div>
-
-        <Cart
-          isOpen={showCart}
-          onClose={() => setShowCart(false)}
-          onCheckout={handleCheckout}
-        />
 
         {(selectedProduct || isCartCheckout) && (
           <PaymentModal

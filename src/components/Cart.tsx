@@ -1,23 +1,19 @@
+// Deprecated: Use CartPage instead for the full cart experience.
+// This component is no longer used as a modal/drawer.
+// You may safely remove this file if not needed elsewhere.
+
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
-interface CartProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onCheckout: () => void;
-}
-
-const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
+export default function Cart() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-end z-50">
       <div className="bg-white w-full max-w-md h-full flex flex-col">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold text-[#46392d]">Your Cart</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button className="text-gray-500 hover:text-gray-700">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -87,10 +83,6 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
                 Clear Cart
               </button>
               <button
-                onClick={() => {
-                  onCheckout();
-                  onClose();
-                }}
                 className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#5c4b3d] transition-colors"
               >
                 Checkout
@@ -101,6 +93,4 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
       </div>
     </div>
   );
-};
-
-export default Cart; 
+} 

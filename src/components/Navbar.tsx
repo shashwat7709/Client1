@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import SellAntiquesModal from './SellAntiquesModal';
+import { useCart } from '../context/CartContext';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const { getItemCount } = useCart();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
