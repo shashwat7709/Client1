@@ -11,6 +11,10 @@ const Navbar: React.FC = () => {
     setIsOpen(!isOpen);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo(0, 0);
+  };
+
   return (
     <>
       <nav className="bg-white shadow-md fixed w-full z-50 top-0">
@@ -77,34 +81,35 @@ const Navbar: React.FC = () => {
               <Link
                 to="/"
                 className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-                onClick={toggleMenu}
+                onClick={() => { scrollToTop(); toggleMenu(); }}
               >
                 Home
               </Link>
               <Link
                 to="/about"
                 className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-                onClick={toggleMenu}
+                onClick={() => { scrollToTop(); toggleMenu(); }}
               >
                 About
               </Link>
               <Link
                 to="/contact"
                 className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-                onClick={toggleMenu}
+                onClick={() => { scrollToTop(); toggleMenu(); }}
               >
                 Contact
               </Link>
               <Link
                 to="/shop"
                 className="block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
-                onClick={toggleMenu}
+                onClick={() => { scrollToTop(); toggleMenu(); }}
               >
                 Shop
               </Link>
               <button
                 onClick={() => {
                   setIsSellModalOpen(true);
+                  scrollToTop();
                   toggleMenu();
                 }}
                 className="block w-full text-left px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors"
