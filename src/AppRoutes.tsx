@@ -9,6 +9,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
+import CartPage from './pages/CartPage';
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
@@ -29,6 +30,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/about" element={<AboutSection />} />
         <Route path="/contact" element={<ContactSection />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/shop/product/:productId" element={<ProductDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />

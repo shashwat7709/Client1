@@ -42,7 +42,16 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleBuyNowClick = () => {
-    setIsPaymentModalOpen(true);
+    if (product) {
+      addToCart({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'
+      });
+      addNotification(`${product.title} added to cart!`, 'success', false);
+      navigate('/cart');
+    }
   };
 
   const handleMakeOfferClick = () => {
