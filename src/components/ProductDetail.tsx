@@ -4,6 +4,7 @@ import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { useNotifications } from '../context/NotificationContext';
 import { FaArrowLeft, FaChevronLeft, FaChevronRight, FaRegClock, FaShippingFast, FaRegCheckCircle } from 'react-icons/fa';
+import PaymentModal from './PaymentModal';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -13,6 +14,7 @@ const ProductDetail: React.FC = () => {
   const { addNotification } = useNotifications();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState<'description' | 'details' | 'shipping'>('description');
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const product = products.find(p => p.id === productId);
 
@@ -35,6 +37,10 @@ const ProductDetail: React.FC = () => {
     setCurrentImageIndex((prev) => 
       prev === product!.images.length - 1 ? 0 : prev + 1
     );
+  };
+
+  const handleBuyNowClick = () => {
+    setIsPaymentModalOpen(true);
   };
 
   if (!product) {
@@ -214,7 +220,10 @@ const ProductDetail: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4">
-                <button className="flex-1 bg-[#46392d] text-white px-8 py-3 rounded-lg hover:bg-[#5c4b3d] transition-colors text-lg font-medium">
+                <button 
+                  onClick={handleBuyNowClick}
+                  className="flex-1 bg-[#46392d] text-white px-8 py-3 rounded-lg hover:bg-[#5c4b3d] transition-colors text-lg font-medium"
+                >
                   Buy Now
                 </button>
                 <button
@@ -243,6 +252,16 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Render PaymentModal */}
+        {product && (
+          <PaymentModal 
+            isOpen={isPaymentModalOpen} 
+            onClose={() => setIsPaymentModalOpen(false)}
+            productTitle={product.title}
+            price={product.price}
+          />
+        )}
       </div>
     </div>
   );
