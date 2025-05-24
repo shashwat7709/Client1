@@ -157,7 +157,8 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {/* Quick Info */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              {/* Removed Vintage Era and Authenticity boxes */}
+              {/* <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="text-center p-4 bg-[#F5F1EA] rounded-lg">
                   <FaRegClock className="w-6 h-6 text-[#46392d] mx-auto mb-2" />
                   <p className="text-sm text-[#46392d]">Vintage Era</p>
@@ -167,7 +168,7 @@ const ProductDetail: React.FC = () => {
                   <p className="text-sm text-[#46392d]">Authenticity</p>
                   <p className="text-xs text-[#46392d]/70">Verified</p>
                 </div>
-              </div>
+              </div> */}
 
               {/* Tabs */}
               <div className="mb-6">

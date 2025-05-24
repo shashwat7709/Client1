@@ -187,6 +187,23 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
         setIsSubmitting(false);
         return;
       }
+      // WhatsApp notification (non-blocking)
+      fetch('/api/whatsapp-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone: phone_country_code + ' ' + phone_number,
+          itemTitle: item_title,
+          description,
+          askingPrice: asking_price
+        })
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to send WhatsApp notification');
+      }).catch(err => {
+        console.error('WhatsApp notification error:', err);
+        addNotification('Failed to send WhatsApp notification.', 'error', false);
+      });
       // Show success notification
       addNotification('Your antique item has been submitted successfully!', 'success', false);
       // Close the modal
