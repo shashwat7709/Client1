@@ -1,8 +1,24 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
+
+const STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+  'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim',
+  'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+];
+
+const CITIES = [
+  'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Ahmedabad', 'Chennai',
+  'Kolkata', 'Surat', 'Pune', 'Jaipur', 'Lucknow', 'Kanpur', 'Nagpur',
+  'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara'
+];
 
 const CartPage: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#F5F1EA] py-12">
@@ -68,7 +84,7 @@ const CartPage: React.FC = () => {
                   Clear Cart
                 </button>
                 <button
-                  onClick={() => alert('Checkout functionality coming soon!')}
+                  onClick={() => navigate('/checkout')}
                   className="px-4 py-2 bg-[#46392d] text-white rounded-md hover:bg-[#5c4b3d] transition-colors"
                 >
                   Checkout
