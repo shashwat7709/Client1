@@ -13,9 +13,9 @@ const ContactOwnerModal: React.FC<ContactOwnerModalProps> = ({ isOpen, onClose, 
   // Owner's contact information
   const ownerInfo = {
     name: "The Vintage Cottage",
-    phone: "+91 7709400619",
-    email: "thevintagecottage@gmail.com",
-    whatsapp: "+91 7709400619"
+    phone: "+91 86689 45632",
+    email: "vintagecottage919@yahoo.com",
+    whatsapp: "+91 86689 45632"
   };
 
   return (

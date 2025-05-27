@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartPage from './pages/CartPage';
+import Checkout from './pages/Checkout';
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
@@ -34,6 +35,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/shop/product/:productId" element={<ProductDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />

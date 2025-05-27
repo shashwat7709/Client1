@@ -284,6 +284,17 @@ const Shop: React.FC = () => {
                       Your Offer
                     </button>
                   </div>
+                  <button
+                    className="mt-2 w-full bg-[#46392d]/10 text-[#46392d] px-4 py-2 rounded-md hover:bg-[#46392d]/20 transition-colors text-center font-medium"
+                    style={{ textDecoration: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProductForContact({ title: product.title });
+                      setShowContactModal(true);
+                    }}
+                  >
+                    Enquire about this product
+                  </button>
                 </div>
               </div>
             </motion.div>

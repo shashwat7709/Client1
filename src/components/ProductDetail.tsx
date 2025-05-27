@@ -265,6 +265,13 @@ const ProductDetail: React.FC = () => {
                   Make an Offer
                 </button>
               </div>
+              <a
+                href={`mailto:info@thevintagecottage.in?subject=Enquiry about ${encodeURIComponent(product.title)}`}
+                className="mt-4 w-full bg-[#46392d]/10 text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d]/20 transition-colors text-lg font-medium text-center block"
+                style={{ textDecoration: 'none' }}
+              >
+                Enquire about this product
+              </a>
             </div>
           </div>
         </div>
