@@ -6,6 +6,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { FaArrowLeft, FaChevronLeft, FaChevronRight, FaRegClock, FaShippingFast, FaRegCheckCircle } from 'react-icons/fa';
 import PaymentModal from './PaymentModal';
 import OfferModal from './OfferModal';
+import ContactOwnerModal from './ContactOwnerModal';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -17,6 +18,7 @@ const ProductDetail: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<'description' | 'details' | 'shipping'>('description');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const product = products.find(p => p.id === productId);
 
@@ -252,6 +254,7 @@ const ProductDetail: React.FC = () => {
                         image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.svg'
                       });
                       addNotification(`${product.title} added to cart!`, 'success', false);
+                      navigate('/cart');
                     }
                   }}
                   className="flex-1 bg-[#F5F1EA] text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d] hover:text-white transition-colors text-lg font-medium"
@@ -265,13 +268,13 @@ const ProductDetail: React.FC = () => {
                   Make an Offer
                 </button>
               </div>
-              <a
-                href={`mailto:info@thevintagecottage.in?subject=Enquiry about ${encodeURIComponent(product.title)}`}
+              <button
                 className="mt-4 w-full bg-[#46392d]/10 text-[#46392d] px-8 py-3 rounded-lg hover:bg-[#46392d]/20 transition-colors text-lg font-medium text-center block"
                 style={{ textDecoration: 'none' }}
+                onClick={() => setIsContactModalOpen(true)}
               >
                 Enquire about this product
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -298,6 +301,14 @@ const ProductDetail: React.FC = () => {
             isOpen={isOfferModalOpen}
             onClose={() => setIsOfferModalOpen(false)}
             product={product}
+          />
+        )}
+
+        {product && (
+          <ContactOwnerModal
+            isOpen={isContactModalOpen}
+            onClose={() => setIsContactModalOpen(false)}
+            productTitle={product.title}
           />
         )}
       </div>
