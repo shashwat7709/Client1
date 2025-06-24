@@ -44,6 +44,11 @@
     font-family: var(--font-secondary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: #46392d;
+    background: #f8f6f2;
+    font-size: 1.125rem;
+    line-height: 1.75;
+    text-rendering: optimizeLegibility;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -463,4 +468,144 @@ body {
 
 .font-script {
   font-family: var(--font-script);
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+:root {
+  --color-bg: #f8fafc;
+  --color-text: #222;
+  --color-card: #fff;
+  --color-shadow: rgba(31, 38, 135, 0.18);
+  --transition: background 0.3s, color 0.3s;
+}
+[data-theme='dark'] {
+  --color-bg: #18181b;
+  --color-text: #f8fafc;
+  --color-card: #23232a;
+  --color-shadow: rgba(0,0,0,0.4);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: var(--transition);
+}
+
+.card, .glass {
+  transition: var(--transition);
+}
+
+/* --- Typography Hierarchy & Contrast --- */
+h1, .h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #2d2217;
+  margin-bottom: 2rem;
+}
+
+h2, .h2 {
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: #46392d;
+  margin-bottom: 1.5rem;
+}
+
+h3, .h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #46392d;
+  margin-bottom: 1rem;
+}
+
+p, .p {
+  color: #5a4a36;
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+}
+
+.caption, .text-caption {
+  font-size: 0.95rem;
+  color: #46392d;
+  opacity: 0.7;
+  font-family: var(--font-body);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+/* --- Button Styling --- */
+.button, .heritage-button {
+  padding: 0.75em 2em;
+  border-radius: 1.5em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: #46392d;
+  color: #f5f1ea;
+  box-shadow: 0 2px 8px 0 rgba(60, 40, 20, 0.10);
+  transition: box-shadow 0.25s cubic-bezier(.4,0,.2,1),
+    filter 0.25s cubic-bezier(.4,0,.2,1),
+    transform 0.18s cubic-bezier(.4,0,.2,1);
+}
+.button:hover, .heritage-button:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 32px 0 rgba(60, 40, 20, 0.18);
+  transform: scale(1.04);
+}
+.button:focus, .heritage-button:focus {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+/* --- Card/Modal/Glassmorphism --- */
+.card, .glass {
+  box-shadow: 0 8px 32px 0 rgba(60, 40, 20, 0.10);
+  border-radius: 1.5em;
+  padding: 2em;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  transition: box-shadow 0.25s, background 0.25s;
+}
+.card:hover, .glass:hover {
+  box-shadow: 0 16px 48px 0 rgba(60, 40, 20, 0.16);
+}
+
+/* --- Section Spacing (4/8px grid) --- */
+.section {
+  margin-bottom: 64px;
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+
+/* --- Micro-interactions --- */
+.card, .glass, .button, .heritage-button {
+  will-change: transform, box-shadow, filter;
+}
+
+/* --- Accessibility: Focus State --- */
+.button:focus-visible, .heritage-button:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+/* --- Utility: Fade-in Animation --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.7s cubic-bezier(.4,0,.2,1) both;
 }

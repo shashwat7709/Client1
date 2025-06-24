@@ -11,6 +11,7 @@ import ProductDetail from './components/ProductDetail';
 import Footer from './components/Footer';
 import CartPage from './pages/CartPage';
 import Checkout from './pages/Checkout';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
@@ -21,23 +22,25 @@ const AppRoutes: React.FC = () => {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={
-          <>
-            <HeroSection />
-            <Newsletter />
-          </>
-        } />
-        <Route path="/about" element={<AboutSection />} />
-        <Route path="/contact" element={<ContactSection />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/shop/product/:productId" element={<ProductDetail />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={
+            <>
+              <HeroSection />
+              <Newsletter />
+            </>
+          } />
+          <Route path="/about" element={<AboutSection />} />
+          <Route path="/contact" element={<ContactSection />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/shop/product/:productId" element={<ProductDetail />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AnimatePresence>
       <Footer />
     </>
   );

@@ -260,11 +260,6 @@ const AdminDashboard: React.FC = () => {
     const files = e.target.files;
     if (!files) return;
 
-    if (editForm.images.length + files.length > 3) {
-      setFormError('Maximum 3 images allowed');
-      return;
-    }
-
     // Clear any existing form errors
     setFormError('');
 
@@ -993,12 +988,10 @@ const AdminDashboard: React.FC = () => {
                         onChange={handleImageUpload}
                         className="hidden"
                         multiple
-                        disabled={editForm.images.length >= 3}
                       />
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={editForm.images.length >= 3}
                         className="w-full text-center"
                       >
                         <div className="space-y-2">
@@ -1346,12 +1339,10 @@ const AdminDashboard: React.FC = () => {
                     onChange={handleNewsletterImageUpload}
                     className="hidden"
                     multiple
-                    disabled={newsletterImages.length >= 3}
                   />
                   <button
                     type="button"
                     onClick={() => newsletterFileInputRef.current?.click()}
-                    disabled={newsletterImages.length >= 3}
                     className="w-full text-center border border-[#46392d]/20 rounded-md py-2 mb-2"
                   >
                     Upload Images (max 3)

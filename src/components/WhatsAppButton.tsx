@@ -2,18 +2,34 @@ import React from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 const WhatsAppButton: React.FC = () => {
-  const phoneNumber = '918668945632'; // Replace with your number
+  const phoneNumber = '918668945632'; // Your business WhatsApp number
   const whatsappLink = `https://wa.me/${phoneNumber}`;
 
   return (
     <a
       href={whatsappLink}
-      className="fixed bottom-6 right-6 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors duration-300 z-50 flex items-center justify-center"
       target="_blank"
       rel="noopener noreferrer"
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 1000,
+        backgroundColor: '#25D366',
+        color: 'white',
+        borderRadius: '50%',
+        width: '56px',
+        height: '56px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        textDecoration: 'none',
+        fontSize: '2rem',
+      }}
       aria-label="Chat on WhatsApp"
     >
-      <FaWhatsapp className="w-6 h-6" />
+      <FaWhatsapp />
     </a>
   );
 };

@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Tilt } from "@/components/ui/tilt";
+import { Spotlight } from "@/components/ui/spotlight";
 
 const HeroSection = () => {
   return (

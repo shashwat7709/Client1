@@ -1,5 +1,46 @@
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+import { ThemeProvider } from './context/ThemeContext';
+import CustomCursor from './components/CustomCursor';
+import { ParallaxProvider } from 'react-scroll-parallax';
+import Lenis from '@studio-freight/lenis';
+import { useEffect } from 'react';
 
-createRoot(document.getElementById("root")!).render(<App />);
+function LenisProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smooth: true,
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smoothTouch: false,
+      touchMultiplier: 1.5,
+    });
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    (window as any).lenis = lenis; // Expose for GSAP/ScrollTrigger
+    return () => {
+      lenis.destroy();
+      delete (window as any).lenis;
+    };
+  }, []);
+  return <>{children}</>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeProvider>
+      <ParallaxProvider>
+        <LenisProvider>
+          <CustomCursor />
+          <App />
+        </LenisProvider>
+      </ParallaxProvider>
+    </ThemeProvider>
+  </React.StrictMode>
+);

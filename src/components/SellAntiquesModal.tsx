@@ -17,6 +17,8 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  // Prevent background scroll when modal is open and mouse wheel is used inside modal
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   // Reset form state when modal opens
   useEffect(() => {
@@ -28,6 +30,32 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
         formRef.current.reset();
       }
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const el = modalContentRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const atTop = scrollTop === 0;
+      const atBottom = scrollTop + clientHeight === scrollHeight;
+      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+        e.preventDefault();
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, [isOpen]);
 
   const countryCodes = [
@@ -147,14 +175,14 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
     // Get form data
     const item_title = (form.elements.namedItem('itemTitle') as HTMLInputElement).value;
     const description = (form.elements.namedItem('description') as HTMLTextAreaElement).value;
-    const asking_price = parseFloat((form.elements.namedItem('price') as HTMLInputElement).value);
+    const price = parseFloat((form.elements.namedItem('price') as HTMLInputElement).value);
     const phone_number = (form.elements.namedItem('phone') as HTMLInputElement).value;
     const address = (form.elements.namedItem('address') as HTMLTextAreaElement).value;
     const name = (form.elements.namedItem('name') as HTMLInputElement).value;
     const phone_country_code = phoneCode;
 
     // Validate form
-    if (!item_title || !description || !asking_price || !phone_number || !address || !name) {
+    if (!item_title || !description || !price || !phone_number || !address || !name) {
       setError('Please fill in all required fields');
       setIsSubmitting(false);
       return;
@@ -166,50 +194,41 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
       return;
     }
 
-    // Create submission with correct schema
-    const submission = {
-      name,
-      item_title,
-      description,
-      address,
-      phone_country_code,
-      phone_number,
-      asking_price,
-      images,
-      created_at: new Date().toISOString()
-    };
-
     try {
-      // Insert into Supabase
-      const { error: supabaseError } = await supabase.from('antique_submissions').insert([submission]);
-      if (supabaseError) {
-        setError('Failed to submit. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-      // Show success notification
-      addNotification('Your antique item has been submitted successfully!', 'success', false);
-      // Close the modal
+      // Create submission with correct schema
+      const submission = {
+        name,
+        item_title,
+        description,
+        address,
+        phone_country_code,
+        phone_number,
+        price,
+        images,
+        created_at: new Date().toISOString()
+      };
+
+      // Add the submission
+      await addSubmission(submission);
+
+      addNotification('Your antique has been submitted successfully!', 'success');
       onClose();
-      // Reset form state
-      setImages([]);
-      setError('');
-      setIsSubmitting(false);
-      if (formRef.current) {
-        formRef.current.reset();
-      }
     } catch (error) {
-      console.error('Submission error:', error);
-      setError('Failed to submit your item. Please try again.');
-      addNotification('There was an error submitting your item. Please try again.', 'error', false);
+      console.error('Error submitting antique:', error);
+      setError('Failed to submit your antique. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#FAF6F1] p-8 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center md:items-start justify-center z-50 overflow-y-auto">
+      <div
+        ref={modalContentRef}
+        className="bg-[#FAF6F1] p-8 rounded-lg w-full max-w-2xl max-h-[90vh] min-h-0 overflow-y-scroll touch-auto relative my-8 md:my-16"
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-[#46392d] hover:text-[#46392d]/70"

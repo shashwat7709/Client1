@@ -39,7 +39,17 @@ interface ProductContextType {
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   submissions: AntiqueSubmission[];
-  addSubmission: (submission: Omit<AntiqueSubmission, 'id' | 'status' | 'submittedAt'>) => Promise<void>;
+  addSubmission: (submission: {
+    name: string;
+    item_title: string;
+    description: string;
+    address: string;
+    phone_country_code: string;
+    phone_number: string;
+    price: number;
+    images: string[];
+    created_at: string;
+  }) => Promise<void>;
   updateSubmission: (submission: AntiqueSubmission) => Promise<void>;
   deleteSubmission: (submissionId: string) => Promise<void>;
   isLoading: boolean;
@@ -198,27 +208,29 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const addSubmission = async (submission: Omit<AntiqueSubmission, 'id' | 'status' | 'submittedAt'>) => {
+  const addSubmission = async (submission: {
+    name: string;
+    item_title: string;
+    description: string;
+    address: string;
+    phone_country_code: string;
+    phone_number: string;
+    price: number;
+    images: string[];
+    created_at: string;
+  }) => {
     try {
-      const newSubmission = {
-        ...submission,
-        status: 'pending' as const,
-        submittedAt: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('submissions')
-        .insert([newSubmission])
-        .select()
-        .single();
+        .insert([submission]);
 
-      if (error) throw error;
-
-      setSubmissions(prev => [...prev, data]);
-      addNotification('Submission added successfully!', 'success');
+      if (error) {
+        console.error('Error adding submission:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Error adding submission:', error);
-      addNotification('Failed to add submission', 'error');
+      throw error;
     }
   };
 

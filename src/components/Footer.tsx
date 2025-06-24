@@ -54,7 +54,7 @@ const Footer = () => {
             <ul className="space-y-2 text-text-light/70">
               <li>Address - 919, Synagogue St, Camp, Pune, Maharashtra 411001</li>
               <li>Phone: +91 86689 45632</li>
-              <li>Email: vintagecottage919@yahoo.com</li>
+              <li>Email: <a href="mailto:vintagecottage919@yahoo.com" className="underline hover:text-text-light">vintagecottage919@yahoo.com</a></li>
             </ul>
           </div>
 
