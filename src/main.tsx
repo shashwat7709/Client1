@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
-import CustomCursor from './components/CustomCursor';
 import { ParallaxProvider } from 'react-scroll-parallax';
 import Lenis from '@studio-freight/lenis';
 import { useEffect } from 'react';
@@ -12,10 +11,6 @@ function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const lenis = new Lenis({
       lerp: 0.1,
-      smooth: true,
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smoothTouch: false,
       touchMultiplier: 1.5,
     });
     function raf(time: number) {
@@ -37,7 +32,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <ParallaxProvider>
         <LenisProvider>
-          {/* <CustomCursor /> */}
           <App />
         </LenisProvider>
       </ParallaxProvider>
