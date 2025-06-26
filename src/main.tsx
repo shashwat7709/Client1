@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
-import CustomCursor from './components/CustomCursor';
 import { ParallaxProvider } from 'react-scroll-parallax';
 import Lenis from '@studio-freight/lenis';
 import { useEffect } from 'react';
@@ -37,7 +36,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <ParallaxProvider>
         <LenisProvider>
-          <CustomCursor />
           <App />
         </LenisProvider>
       </ParallaxProvider>
