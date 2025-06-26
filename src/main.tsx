@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <ParallaxProvider>
         <LenisProvider>
-          <CustomCursor />
+          {/* <CustomCursor /> */}
           <App />
         </LenisProvider>
       </ParallaxProvider>

@@ -58,15 +58,10 @@ interface ProductContextType {
 
 const categories = [
   'All',
-  'Antique',
-  'Vintage Furniture',
+  'Furniture',
   'Crystal & Glass',
-  'Decorative Accents',
   'Lighting & Mirrors',
-  'Tableware',
-  'Wall Art',
-  'Antique Books',
-  'Garden & Outdoor',
+  'Silverware',
   'Textiles',
   'Others'
 ];

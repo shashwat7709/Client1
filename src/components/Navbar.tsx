@@ -6,9 +6,9 @@ import { useCart } from '../context/CartContext';
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
+  { label: 'Shop', to: '/shop' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
-  { label: 'Shop', to: '/shop' },
 ];
 
 const SECTION_IDS = ['home', 'about', 'contact', 'shop'];
@@ -113,7 +113,7 @@ const Navbar: React.FC = () => {
 
             {/* Desktop menu */}
             <div className="hidden md:flex md:items-center md:space-x-8">
-              {NAV_LINKS.map(link => (
+              {NAV_LINKS.filter(link => link.label === 'Home' || link.label === 'Shop').map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -129,6 +129,16 @@ const Navbar: React.FC = () => {
               >
                 Sell Your Antiques
               </button>
+              {NAV_LINKS.filter(link => link.label === 'About' || link.label === 'Contact').map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors relative px-2 py-1
+                    ${activeSection && link.to.includes(activeSection) ? 'text-gold font-bold underline underline-offset-8' : ''}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -139,7 +149,7 @@ const Navbar: React.FC = () => {
             className="md:hidden absolute w-full bg-white shadow-lg transition-all duration-300 ease-in-out opacity-100 translate-y-0"
           >
             <div className="px-4 pt-2 pb-3 space-y-1">
-              {NAV_LINKS.map(link => (
+              {NAV_LINKS.filter(link => link.label === 'Home' || link.label === 'Shop').map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -160,6 +170,17 @@ const Navbar: React.FC = () => {
               >
                 Sell Your Antiques
               </button>
+              {NAV_LINKS.filter(link => link.label === 'About' || link.label === 'Contact').map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`block px-3 py-2 text-[#46392d] hover:text-[#5c4b3d] font-medium transition-colors
+                    ${activeSection && link.to.includes(activeSection) ? 'text-gold font-bold underline underline-offset-8' : ''}`}
+                  onClick={() => { scrollToTop(); toggleMenu(); }}
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         )}
