@@ -1,5 +1,36 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+
+// Helper to send WhatsApp message via Gupshup
+async function sendWhatsAppMessageGupshup(formData: any) {
+  const apiKey = import.meta.env.VITE_WHATSAPP_API_KEY;
+  const url = 'https://api.gupshup.io/sm/api/v1/msg';
+  const recipient = '917709400619'; // 91 for India, no plus
+  const sender = '15557946085'; // Gupshup sender number, no plus
+
+  const message = `Hey! a new antique received\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nItem Type: ${formData.itemType}\nDescription: ${formData.description}`;
+
+  const payload = {
+    channel: 'whatsapp',
+    source: sender,
+    destination: recipient,
+    message: message,
+    type: 'text'
+  };
+
+  const formBody = Object.entries(payload)
+    .map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
+    .join('&');
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'apikey': apiKey,
+    },
+    body: formBody,
+  });
+  return res.json();
+}
 
 const SellAntiquesSection = () => {
   const [formData, setFormData] = useState({
@@ -10,11 +41,42 @@ const SellAntiquesSection = () => {
     description: '',
     images: null
   });
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [apiResponse, setApiResponse] = useState<any>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value, files } = e.target as HTMLInputElement;
+    if (id === 'images') {
+      setFormData((prev) => ({ ...prev, images: files }));
+    } else {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
+    setSending(true);
+    setError('');
+    setSuccess(false);
+    setApiResponse(null);
+    try {
+      console.log('About to send WhatsApp message'); // Debug log
+      const response = await sendWhatsAppMessageGupshup(formData);
+      console.log('WhatsApp API response:', response); // Debug log
+      setApiResponse(response);
+      if (response && response.status === 'success') {
+        setSuccess(true);
+        setFormData({ name: '', email: '', phone: '', itemType: '', description: '', images: null });
+      } else {
+        setError('Failed to send WhatsApp notification.');
+      }
+    } catch (err) {
+      setError('Failed to send WhatsApp notification.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -26,12 +88,7 @@ const SellAntiquesSection = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Information */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-8"
-            >
+            <div className="space-y-8">
               <div>
                 <h2 className="text-4xl font-serif text-[#46392d] mb-6">
                   Sell Your Antiques
@@ -78,21 +135,18 @@ const SellAntiquesSection = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Right Column - Form */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="bg-white p-8 rounded-lg shadow-md"
-            >
+            <div className="bg-white p-8 rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-[#46392d] font-medium mb-2">Name</label>
                   <input
                     type="text"
                     id="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                     placeholder="Your full name"
                     required
@@ -104,6 +158,8 @@ const SellAntiquesSection = () => {
                   <input
                     type="email"
                     id="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                     placeholder="Your email address"
                     required
@@ -115,6 +171,8 @@ const SellAntiquesSection = () => {
                   <input
                     type="tel"
                     id="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                     placeholder="Your phone number"
                     required
@@ -125,6 +183,8 @@ const SellAntiquesSection = () => {
                   <label htmlFor="itemType" className="block text-[#46392d] font-medium mb-2">Type of Item</label>
                   <select
                     id="itemType"
+                    value={formData.itemType}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                     required
                   >
@@ -141,6 +201,8 @@ const SellAntiquesSection = () => {
                   <label htmlFor="description" className="block text-[#46392d] font-medium mb-2">Description</label>
                   <textarea
                     id="description"
+                    value={formData.description}
+                    onChange={handleChange}
                     rows={4}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                     placeholder="Please describe your item, including its condition, age, and any known history"
@@ -155,6 +217,7 @@ const SellAntiquesSection = () => {
                     id="images"
                     multiple
                     accept="image/*"
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-[#46392d]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46392d]/50"
                   />
                   <p className="text-sm text-[#46392d]/60 mt-1">You can upload multiple images (max 5)</p>
@@ -163,11 +226,19 @@ const SellAntiquesSection = () => {
                 <button
                   type="submit"
                   className="w-full bg-[#46392d] text-[#F5F1EA] py-3 rounded-md hover:bg-[#46392d]/90 transition-colors duration-300"
+                  disabled={sending}
                 >
-                  Submit Request
+                  {sending ? 'Submitting...' : 'Submit Request'}
                 </button>
+                {success && <p className="text-green-600">WhatsApp notification sent!</p>}
+                {error && <p className="text-red-600">{error}</p>}
+                {apiResponse && (
+                  <pre className="text-xs text-gray-700 bg-gray-100 p-2 rounded mt-2 overflow-x-auto max-w-full">
+                    {JSON.stringify(apiResponse, null, 2)}
+                  </pre>
+                )}
               </form>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

@@ -205,16 +205,37 @@ const SellAntiquesModal: React.FC<SellAntiquesModalProps> = ({ isOpen, onClose }
         phone_number,
         price,
         images,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-
-      // Add the submission
       await addSubmission(submission);
-
       addNotification('Your antique has been submitted successfully!', 'success');
+
+      // WhatsApp notification logic (call backend)
+      const whatsappPayload = {
+        to: '917709400619',
+        antiqueDetails: {
+          seller: name,
+          title: item_title,
+          description,
+          address,
+          contact: phone_number,
+          price
+        }
+      };
+      console.log('Sending WhatsApp notification via backend:', whatsappPayload);
+      const whatsappRes = await fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(whatsappPayload)
+      });
+      const whatsappData = await whatsappRes.json();
+      console.log('Backend WhatsApp API response:', whatsappData);
+      if (!whatsappRes.ok || whatsappData.status !== 'success') {
+        setError('Failed to send WhatsApp notification.');
+      }
+
       onClose();
-    } catch (error) {
-      console.error('Error submitting antique:', error);
+    } catch (err: any) {
       setError('Failed to submit your antique. Please try again.');
     } finally {
       setIsSubmitting(false);

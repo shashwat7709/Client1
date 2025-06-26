@@ -24,21 +24,35 @@ app.use('/api', apiRoutes);
 app.post('/api/send-whatsapp', async (req, res) => {
   try {
     const { to, antiqueDetails } = req.body;
-    
-    const message = `🏺 New Antique Submission!\n\n` +
-      `Item: ${antiqueDetails.title}\n` +
-      `Price: ₹${antiqueDetails.price}\n` +
-      `Seller: ${antiqueDetails.seller}\n` +
-      `Contact: ${antiqueDetails.contact}\n\n` +
-      `Description: ${antiqueDetails.description.substring(0, 100)}${antiqueDetails.description.length > 100 ? '...' : ''}`;
+    const apiKey = process.env.GUPSHUP_API_KEY;
+    const url = 'https://api.gupshup.io/sm/api/v1/msg';
+    const sender = '15557946085'; // Gupshup sender number, no plus
+    const recipient = to.replace(/^\+/, ''); // Remove plus if present
 
-    const response = await client.messages.create({
-      body: message,
-      from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`,
-      to: `whatsapp:+${to}`
+    const message = `Hey! a new antique received\n\nName: ${antiqueDetails.seller}\nItem Title: ${antiqueDetails.title}\nDescription: ${antiqueDetails.description}\nAddress: ${antiqueDetails.address || ''}\nPhone: ${antiqueDetails.contact}\nPrice: ${antiqueDetails.price}`;
+
+    const payload = {
+      channel: 'whatsapp',
+      source: sender,
+      destination: recipient,
+      message: message,
+      type: 'text'
+    };
+
+    const formBody = Object.entries(payload)
+      .map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
+      .join('&');
+
+    const fetchResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'apikey': apiKey,
+      },
+      body: formBody,
     });
-
-    res.json({ success: true, messageId: response.sid });
+    const data = await fetchResponse.json();
+    res.json(data);
   } catch (error) {
     console.error('Error sending WhatsApp message:', error);
     res.status(500).json({ success: false, error: error.message });
