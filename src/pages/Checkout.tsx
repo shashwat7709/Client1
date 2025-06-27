@@ -217,7 +217,7 @@ const Checkout: React.FC = () => {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="shipping" value="express" checked={formData.shipping === 'express'} onChange={e => handleSelectChange('shipping', e.target.value)} />
-                  <span>Express Shipping (7-10 days)</span>
+                  <span>Shipping (7-10 days)</span>
                 </label>
               </div>
             </CardContent>
@@ -245,10 +245,6 @@ const Checkout: React.FC = () => {
                     </div>
                   </div>
                 )}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="payment" value="cod" checked={formData.payment === 'cod'} onChange={e => handleSelectChange('payment', e.target.value)} />
-                  <span>Cash on Delivery</span>
-                </label>
               </div>
             </CardContent>
           </Card>
