@@ -12,11 +12,17 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setError(''); // Clear previous errors
 
+    // Debug: Log email and password being sent
+    console.log('Login attempt:', { email, password });
+
     try {
       const { data, error } = await supabase.rpc('verify_admin_password', {
         admin_email: email,
         plain_password: password,
       });
+
+      // Debug: Log Supabase RPC response
+      console.log('Supabase RPC response:', { data, error });
 
       if (error) {
         console.error('Error calling verify_admin_password:', error);
@@ -26,8 +32,8 @@ const AdminLogin: React.FC = () => {
 
       if (data === true) {
         // Store a simple indicator that the admin is logged in.
-        // For a real application, you might want a more robust session management.
-        localStorage.setItem('adminLoggedIn', 'true'); 
+        // Use the same key as AdminDashboard.tsx
+        localStorage.setItem('adminToken', 'true');
         navigate('/admin/dashboard');
       } else {
         setError('Invalid email or password');

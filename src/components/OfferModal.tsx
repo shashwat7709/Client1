@@ -69,9 +69,7 @@ const OfferModal: React.FC<OfferModalProps> = ({ isOpen, onClose, product }) => 
       contact_number: contactNumber,
       email: email,
       offer_amount: amount,
-      product_price: product.price,
       message: message,
-      image: product.images && product.images.length > 0 ? product.images[0] : null,
     };
 
     // Insert data into Supabase

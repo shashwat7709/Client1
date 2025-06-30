@@ -217,7 +217,19 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const { error } = await supabase
         .from('submissions')
-        .insert([submission]);
+        .insert([{
+          item_title: submission.item_title,
+          description: submission.description,
+          asking_price: submission.price,
+          images: submission.images,
+          contact_info: {
+            name: submission.name,
+            address: submission.address,
+            phone_country_code: submission.phone_country_code,
+            phone_number: submission.phone_number
+          },
+          created_at: submission.created_at
+        }]);
 
       if (error) {
         console.error('Error adding submission:', error);

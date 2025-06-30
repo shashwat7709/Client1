@@ -25,6 +25,12 @@ const NewsletterDashboard = () => {
     validUntil: '',
     code: '',
   });
+  const [offerTitle, setOfferTitle] = useState('');
+
+  // Image upload state
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // Fetch subscribers
   useEffect(() => {
@@ -47,7 +53,30 @@ const NewsletterDashboard = () => {
   const handleSendNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    let imageUrls: string[] = [];
+    if (type === 'offer' && uploadedImages.length > 0) {
+      setUploading(true);
+      try {
+        // Upload each image to Supabase Storage
+        const { supabase } = await import('../../config/supabase');
+        const uploadPromises = uploadedImages.map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+          const { data, error } = await supabase.storage.from('offer-images').upload(fileName, file, { upsert: false });
+          if (error) throw error;
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage.from('offer-images').getPublicUrl(fileName);
+          return publicUrlData.publicUrl;
+        });
+        imageUrls = await Promise.all(uploadPromises);
+      } catch (err) {
+        setMessage('Image upload failed. Please try again.');
+        setIsLoading(false);
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
     try {
       const response = await fetch('/api/admin/send-newsletter', {
         method: 'POST',
@@ -59,16 +88,19 @@ const NewsletterDashboard = () => {
           content,
           type,
           ...(type === 'offer' && { offerDetails }),
+          ...(type === 'offer' && { title: offerTitle }),
+          images: imageUrls, // Always include images array (empty if none)
         }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         setMessage('Newsletter sent successfully!');
         setSubject('');
         setContent('');
         setOfferDetails({ discount: '', validUntil: '', code: '' });
+        setUploadedImages([]);
+        setImagePreviews([]);
+        setOfferTitle('');
       } else {
         setMessage(data.error || 'Failed to send newsletter');
       }
@@ -137,6 +169,16 @@ Terms and conditions apply.`;
           {type === 'offer' && (
             <div className="space-y-4">
               <div>
+                <label htmlFor="offer-title" className="block mb-2">Offer Title</label>
+                <Input
+                  id="offer-title"
+                  value={offerTitle}
+                  onChange={e => setOfferTitle(e.target.value)}
+                  placeholder="e.g., Summer Sale - 20% Off!"
+                  required
+                />
+              </div>
+              <div>
                 <label htmlFor="discount" className="block mb-2">Discount</label>
                 <Input
                   id="discount"
@@ -165,6 +207,28 @@ Terms and conditions apply.`;
                   onChange={(e) => setOfferDetails(prev => ({ ...prev, validUntil: e.target.value }))}
                   required
                 />
+              </div>
+              <div>
+                <label htmlFor="offer-images" className="block mb-2">Offer Images (optional)</label>
+                <Input
+                  id="offer-images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={e => {
+                    const files = Array.from(e.target.files || []);
+                    setUploadedImages(files);
+                    setImagePreviews(files.map(file => URL.createObjectURL(file)));
+                  }}
+                />
+                {/* Preview selected images */}
+                {imagePreviews.length > 0 && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {imagePreviews.map((src, idx) => (
+                      <img key={idx} src={src} alt="Preview" className="w-20 h-20 object-cover rounded border" />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

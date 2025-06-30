@@ -25,6 +25,9 @@ interface UserOffer {
   product_price: number;
   message: string;
   image: string;
+  product: {
+    images: string[];
+  };
 }
 
 interface EditSubmissionForm {
@@ -110,7 +113,7 @@ const AdminDashboard: React.FC = () => {
       console.log('Current activeTab in fetch effect:', activeTab);
       const { data, error } = await supabase
         .from('user_offer')
-        .select('*')
+        .select(`*, product:product_id (images)`) // join to get product images
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -1444,19 +1447,18 @@ const AdminDashboard: React.FC = () => {
                 {userOffers.map((offer) => (
                   <div key={offer.id} className="bg-white p-4 rounded-lg shadow">
                     <h3 className="text-xl font-serif text-[#46392d]">Offer Details</h3>
-                    {offer.image && (
+                    {/* Show product image if available */}
+                    {offer.product && offer.product.images && offer.product.images.length > 0 && (
                       <div className="mb-4">
-                        <img src={offer.image} alt="Product" className="w-full h-48 object-cover rounded-md" />
+                        <img src={offer.product.images[0]} alt="Product" className="w-full h-48 object-cover rounded-md" />
                       </div>
                     )}
                     <p><strong>Name:</strong> {offer.name}</p>
                     <p><strong>Contact Number:</strong> {offer.contact_number}</p>
                     <p><strong>Email:</strong> {offer.email}</p>
                     <p><strong>Offer Amount:</strong> ₹{offer.offer_amount}</p>
-                    <p><strong>Product Price:</strong> ₹{offer.product_price}</p>
                     <p><strong>Message:</strong> {offer.message}</p>
                     <p className="text-sm text-gray-500">Submitted on: {new Date(offer.created_at).toLocaleString()}</p>
-                    {/* Add more offer details as needed */}
                   </div>
                 ))}
               </div>
