@@ -479,6 +479,7 @@ const AdminDashboard: React.FC = () => {
   const [newsletterContent, setNewsletterContent] = useState('');
   const newsletterFileInputRef = useRef<HTMLInputElement>(null);
   const [newsletterFormError, setNewsletterFormError] = useState('');
+  const [newsletterTitle, setNewsletterTitle] = useState('');
 
   // Add state for loading and status for offers
   const [offerLoading, setOfferLoading] = useState(false);
@@ -545,8 +546,12 @@ const AdminDashboard: React.FC = () => {
   // Add handler for publishing offer
   const handleOfferPublish = async () => {
     setOfferStatus('');
-    if (!newsletterContent.trim() || newsletterImages.length === 0) {
-      setOfferStatus('Please provide both images and content.');
+    if (!newsletterTitle.trim()) {
+      setOfferStatus('Please provide an offer title.');
+      return;
+    }
+    if (!newsletterContent.trim()) {
+      setOfferStatus('Please provide offer content.');
       return;
     }
     setOfferLoading(true);
@@ -555,13 +560,14 @@ const AdminDashboard: React.FC = () => {
       const offerId = adminOffers[offerEditIndex].id;
       const { error } = await supabase
         .from('admin_offers')
-        .update({ images: newsletterImages, content: newsletterContent })
+        .update({ title: newsletterTitle, images: newsletterImages, content: newsletterContent })
         .eq('id', offerId);
       setOfferLoading(false);
       if (error) {
         setOfferStatus('Error updating offer: ' + error.message);
       } else {
         setOfferStatus('Offer updated successfully!');
+        setNewsletterTitle('');
         setNewsletterImages([]);
         setNewsletterContent('');
         setOfferEditIndex(null);
@@ -571,12 +577,13 @@ const AdminDashboard: React.FC = () => {
       // Insert new offer
       const { error } = await supabase
         .from('admin_offers')
-        .insert([{ images: newsletterImages, content: newsletterContent }]);
+        .insert([{ title: newsletterTitle, images: newsletterImages, content: newsletterContent }]);
       setOfferLoading(false);
       if (error) {
         setOfferStatus('Error: ' + error.message);
       } else {
         setOfferStatus('Offer published successfully!');
+        setNewsletterTitle('');
         setNewsletterImages([]);
         setNewsletterContent('');
         if (newsletterFileInputRef.current) newsletterFileInputRef.current.value = '';
@@ -758,7 +765,7 @@ const AdminDashboard: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        <span>Delete Product</span>
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
@@ -1333,6 +1340,17 @@ const AdminDashboard: React.FC = () => {
                 <div className={`mb-4 px-4 py-3 rounded ${offerStatus.startsWith('Error') ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`}>{offerStatus}</div>
               )}
               <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-[#46392d] mb-1">Offer Title</label>
+                  <input
+                    type="text"
+                    value={newsletterTitle}
+                    onChange={e => setNewsletterTitle(e.target.value)}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#46392d]"
+                    placeholder="Enter offer title (required)"
+                    required
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-[#46392d] mb-1">Images</label>
                   <input
